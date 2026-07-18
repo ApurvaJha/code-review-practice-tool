@@ -9,20 +9,16 @@
             --text-main: #f8fafc; --text-muted: #94a3b8; --accent: #38bdf8; --code-bg: #0b0f19;
         }
         body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-main); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; }
-
-        /* State class applied to body during sidebar resize */
         body.is-resizing { cursor: col-resize !important; user-select: none !important; }
 
         header { background-color: var(--bg-surface); padding: 1rem 2rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
         h1 { margin: 0; font-size: 1.25rem; color: var(--accent); }
         .main-container { display: flex; flex: 1; overflow: hidden; }
 
-        /* Sidebar is now adjustable via inline styles from JS */
         .sidebar { width: 350px; min-width: 250px; max-width: 800px; display: flex; flex-direction: column; background: var(--bg-surface); overflow-y: auto; flex-shrink: 0; }
         .sidebar-section { padding: 1.5rem; border-bottom: 1px solid var(--border-color); }
         .sidebar-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 1rem; font-weight: bold; }
 
-        /* The Draggable Resizer */
         .resizer { width: 6px; background-color: var(--bg-main); border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); cursor: col-resize; z-index: 10; transition: background-color 0.2s; }
         .resizer:hover, .resizer:active { background-color: var(--accent); }
 
@@ -35,35 +31,42 @@
         .file-header { padding: 1rem; background: #131b2c; border-bottom: 1px solid var(--border-color); font-family: monospace; color: var(--accent); display: flex; justify-content: space-between; }
         .file-header .hint { font-size: 0.8rem; color: var(--text-muted); font-family: sans-serif; }
 
-        /* user-select: none prevents native text copying so drag-to-comment is smooth anywhere on the text */
         .code-wrapper { font-family: 'Fira Code', Consolas, Monaco, monospace; font-size: 0.9rem; padding: 1rem 0; user-select: none; }
 
         .code-row { display: flex; align-items: flex-start; width: 100%; transition: background-color 0.1s; cursor: pointer; }
         .code-row:hover { background-color: #1e293b; }
-
         .code-row.highlighted { background-color: rgba(56, 189, 248, 0.15); }
         .code-row.highlighted .ln { color: var(--accent); border-right-color: var(--accent); }
-
         .code-row.selecting { background-color: rgba(56, 189, 248, 0.3); }
         .code-row.selecting .ln { color: white; background-color: rgba(56, 189, 248, 0.4); }
 
         .ln { width: 3rem; min-width: 3rem; text-align: right; padding-right: 1rem; color: #475569; border-right: 1px solid #1e293b; user-select: none; }
         .code-row:hover .ln { color: white; }
-
         .txt { padding-left: 1rem; white-space: pre-wrap; word-break: break-all; color: #e2e8f0; flex: 1; pointer-events: none; }
 
+        /* User Comments */
         .comment-area { background: var(--bg-surface); padding: 0.75rem; border-left: 3px solid var(--accent); margin: 0.25rem 3rem 1rem 3rem; display: flex; align-items: center; gap: 0.5rem; cursor: default; }
         .comment-area input { flex: 1; background: #0f172a; border: 1px solid var(--border-color); color: white; padding: 0.6rem; border-radius: 4px; font-family: sans-serif; user-select: text; }
-
         .del-btn { background: transparent; border: none; cursor: pointer; font-size: 1.1rem; opacity: 0.6; transition: opacity 0.2s; }
         .del-btn:hover { opacity: 1; }
+
+        /* AI Inline Feedback Classes */
+        .ai-feedback { margin: 0.25rem 3rem 1rem 3rem; padding: 0.75rem; border-radius: 4px; border-left: 4px solid; display: flex; align-items: flex-start; gap: 0.75rem; font-family: sans-serif; }
+        .ai-accurate { background: rgba(34, 197, 94, 0.1); border-color: #22c55e; }
+        .ai-missed { background: rgba(239, 68, 68, 0.1); border-color: #ef4444; }
+        .ai-superfluous { background: rgba(234, 179, 8, 0.1); border-color: #eab308; }
+
+        .ai-tag { font-weight: bold; text-transform: uppercase; font-size: 0.7rem; padding: 3px 6px; border-radius: 4px; margin-top: 2px; }
+        .tag-accurate { background: #22c55e; color: #0f172a; }
+        .tag-missed { background: #ef4444; color: #0f172a; }
+        .tag-superfluous { background: #eab308; color: #0f172a; }
 
         .btn { background-color: var(--accent); color: #0f172a; border: none; padding: 0.6rem 1.2rem; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 1rem; }
         .btn:hover { opacity: 0.9; }
 
         .eval-section { margin-top: 1rem; background: #1e293b; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color); }
         .eval-title { font-weight: bold; margin-bottom: 0.5rem; color: var(--accent); }
-        ul { margin: 0; padding-left: 1.2rem; color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; }
+
         .scorecard { display: flex; gap: 1rem; margin-bottom: 1rem; }
         .score-box { flex: 1; padding: 1rem; background: #0f172a; border-radius: 6px; text-align: center; border: 1px solid var(--border-color); }
         .score-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.25rem; font-weight: bold; }
@@ -96,7 +99,6 @@
         </div>
     </div>
 
-    <!-- The Resizer Handle -->
     <div class="resizer" id="resizer"></div>
 
     <div class="code-pane">
@@ -109,23 +111,19 @@
 </div>
 
 <script>
-    // --- Resizer Logic ---
     const resizer = document.getElementById('resizer');
     const sidebar = document.getElementById('sidebar');
     let isResizingSidebar = false;
 
-    resizer.addEventListener('mousedown', (e) => {
+    resizer.addEventListener('mousedown', () => {
         isResizingSidebar = true;
         document.body.classList.add('is-resizing');
     });
-
     window.addEventListener('mousemove', (e) => {
         if (!isResizingSidebar) return;
-        // Restrict minimum and maximum width to prevent breaking the UI layout
         const newWidth = Math.max(250, Math.min(e.clientX, 800));
         sidebar.style.width = `${newWidth}px`;
     });
-
     window.addEventListener('mouseup', () => {
         if (isResizingSidebar) {
             isResizingSidebar = false;
@@ -133,13 +131,12 @@
         }
     });
 
-    // --- Core Application Logic ---
     let activeFiles = [];
     let currentFileName = null;
     let currentCodeText = "";
     let commentsByFile = {};
+    let activeEvaluation = null;
 
-    // Drag selection state
     let isDraggingCode = false;
     let dragStartLine = null;
     let dragCurrentLine = null;
@@ -157,7 +154,7 @@
 
             if (activeFiles.length > 0) switchFile(activeFiles[0].name);
         } catch (e) {
-            document.getElementById('description-box').innerText = "Failed loading scenario. Ensure backend is running.";
+            document.getElementById('description-box').innerText = "Failed loading scenario.";
         }
     };
 
@@ -195,7 +192,7 @@
     function isLineInSavedRange(lineNum) {
         const fileComments = commentsByFile[currentFileName] || {};
         for (let key in fileComments) {
-            if (fileComments[key] === null || fileComments[key] === undefined) continue;
+            if (!fileComments[key]) continue;
             const parts = key.split('-');
             const start = parseInt(parts[0]);
             const end = parts.length > 1 ? parseInt(parts[1]) : start;
@@ -229,30 +226,19 @@
 
             if (isLineInSavedRange(lineNum)) row.classList.add('highlighted');
 
-            // Starts selection anywhere on the row (line number or code text)
             row.onmousedown = (e) => {
-                // Ignore if clicking inside an existing comment input or delete button
-                if (e.target.closest('.comment-area')) return;
-
+                if (e.target.closest('.comment-area') || e.target.closest('.ai-feedback')) return;
                 e.preventDefault();
                 isDraggingCode = true;
                 dragStartLine = lineNum;
                 dragCurrentLine = lineNum;
                 applyDragHighlight();
             };
-
             row.onmouseenter = () => {
-                if (isDraggingCode) {
-                    dragCurrentLine = lineNum;
-                    applyDragHighlight();
-                }
+                if (isDraggingCode) { dragCurrentLine = lineNum; applyDragHighlight(); }
             };
-
             row.onmouseup = () => {
-                if (isDraggingCode) {
-                    isDraggingCode = false;
-                    finalizeSelection();
-                }
+                if (isDraggingCode) { isDraggingCode = false; finalizeSelection(); }
             };
 
             const ln = document.createElement('div');
@@ -267,7 +253,7 @@
             row.appendChild(txt);
             canvas.appendChild(row);
 
-            // Render comment box
+            // 1. Draw User Comments
             activeRanges.filter(r => r.end === lineNum && r.text !== null).forEach(r => {
                 const commentWrapper = document.createElement('div');
                 commentWrapper.className = 'comment-area';
@@ -283,13 +269,52 @@
                 const delBtn = document.createElement('button');
                 delBtn.innerText = '🗑️';
                 delBtn.className = 'del-btn';
-                delBtn.title = "Delete comment";
                 delBtn.onclick = () => saveComment(r.key, null);
 
                 commentWrapper.appendChild(inputField);
                 commentWrapper.appendChild(delBtn);
                 canvas.appendChild(commentWrapper);
             });
+
+            // 2. Draw AI Inline Feedback directly beneath user comments
+            if (activeEvaluation && activeEvaluation.inlineFeedback) {
+                const aiFeedbacks = activeEvaluation.inlineFeedback.filter(f => f.file === currentFileName);
+
+                const matchingFeedbacks = aiFeedbacks.filter(f => {
+                    const parts = String(f.line).split('-');
+                    const endLine = parts.length > 1 ? parseInt(parts[1]) : parseInt(parts[0]);
+                    return endLine === lineNum;
+                });
+
+                matchingFeedbacks.forEach(f => {
+                    const typeClass = (f.type || 'Missed').toLowerCase();
+
+                    const aiWrapper = document.createElement('div');
+                    aiWrapper.className = `ai-feedback ai-${typeClass}`;
+
+                    const tag = document.createElement('span');
+                    tag.className = `ai-tag tag-${typeClass}`;
+                    tag.innerText = f.type;
+
+                    const textContent = document.createElement('div');
+
+                    const refLine = document.createElement('div');
+                    refLine.style.fontSize = "0.75rem";
+                    refLine.style.color = "var(--text-muted)";
+                    refLine.style.marginBottom = "4px";
+                    refLine.innerText = `Line(s): ${f.line}`;
+
+                    const message = document.createElement('div');
+                    message.innerText = f.comment;
+
+                    textContent.appendChild(refLine);
+                    textContent.appendChild(message);
+
+                    aiWrapper.appendChild(tag);
+                    aiWrapper.appendChild(textContent);
+                    canvas.appendChild(aiWrapper);
+                });
+            }
         });
     }
 
@@ -299,11 +324,8 @@
 
         document.querySelectorAll('.code-row').forEach(row => {
             const ln = parseInt(row.getAttribute('data-line'));
-            if (ln >= min && ln <= max) {
-                row.classList.add('selecting');
-            } else {
-                row.classList.remove('selecting');
-            }
+            if (ln >= min && ln <= max) row.classList.add('selecting');
+            else row.classList.remove('selecting');
         });
     }
 
@@ -327,20 +349,13 @@
         }, 50);
     }
 
-    // Safety net: if you drag code selection outside the window
     window.addEventListener('mouseup', () => {
-        if (isDraggingCode) {
-            isDraggingCode = false;
-            finalizeSelection();
-        }
+        if (isDraggingCode) { isDraggingCode = false; finalizeSelection(); }
     });
 
     function saveComment(key, value) {
-        if (value === null || !value.trim()) {
-            delete commentsByFile[currentFileName][key];
-        } else {
-            commentsByFile[currentFileName][key] = value;
-        }
+        if (value === null || !value.trim()) delete commentsByFile[currentFileName][key];
+        else commentsByFile[currentFileName][key] = value;
         reRenderCanvas();
         renderFileExplorer();
     }
@@ -371,36 +386,31 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(cleanComments)
             });
-            const evaluation = await res.json();
-            const signalColor = getSignalColor(evaluation.hireSignal);
+            activeEvaluation = await res.json();
+
+            reRenderCanvas();
+
+            const signalColor = getSignalColor(activeEvaluation.hireSignal);
 
             outBox.innerHTML = `
                 <div class="scorecard">
                     <div class="score-box">
                         <div class="score-label">Rigor Score</div>
-                        <div class="score-value" style="color: var(--text-main);">${evaluation.score || 0}/100</div>
+                        <div class="score-value" style="color: var(--text-main);">${activeEvaluation.score || 0}/100</div>
                     </div>
                     <div class="score-box" style="border-color: ${signalColor}40; background: ${signalColor}10;">
                         <div class="score-label" style="color: ${signalColor};">Hiring Signal</div>
-                        <div class="score-value" style="color: ${signalColor};">${evaluation.hireSignal || 'Pending'}</div>
+                        <div class="score-value" style="color: ${signalColor};">${activeEvaluation.hireSignal || 'Pending'}</div>
                     </div>
                 </div>
 
                 <div class="eval-section" style="margin-top: 0;">
                     <div class="eval-title">System Verdict</div>
-                    <p style="font-size:0.9rem; line-height:1.5; color:var(--text-main); margin:0;">${evaluation.overallVerdict}</p>
+                    <p style="font-size:0.9rem; line-height:1.5; color:var(--text-main); margin:0;">${activeEvaluation.overallVerdict}</p>
                 </div>
-                <div class="eval-section">
-                    <div class="eval-title">Missed Systemic Risks</div>
-                    <ul>${(evaluation.missedFlaws || []).map(f => `<li>${f}</li>`).join('') || '<li>None</li>'}</ul>
-                </div>
-                <div class="eval-section">
-                    <div class="eval-title">Valid Critiques Logged</div>
-                    <ul>${(evaluation.validCritiques || []).map(c => `<li>${c}</li>`).join('') || '<li>None</li>'}</ul>
-                </div>
-                <div class="eval-section">
-                    <div class="eval-title">Superfluous Focus</div>
-                    <ul>${(evaluation.superfluousComments || []).map(s => `<li>${s}</li>`).join('') || '<li>None</li>'}</ul>
+
+                <div style="margin-top: 1rem; color: var(--accent); font-size: 0.9rem; line-height: 1.5;">
+                    👉 <strong>Check the files!</strong> Detailed evaluation of what you missed, what you got right, and what was superfluous has been added directly beneath the code lines in the active files.
                 </div>
             `;
         } catch(e) {

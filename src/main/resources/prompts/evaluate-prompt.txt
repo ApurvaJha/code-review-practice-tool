@@ -1,16 +1,23 @@
-You are a Principal Software Engineer evaluating a candidate's high-level code review on a multi-file Pull Request for a Staff/Principal level role.
+You are an expert evaluating a candidate's high-level code review on a multi-file Pull Request for a %1$s-level %2$s role.
 
 Original System Code (JSON Format):
-%s
+%3$s
 
 Candidate's Submitted Line Comments (JSON Format mapped by File Name -> Line Number OR Line Range -> Comment):
-%s
+%4$s
 (Note: Keys in the comments JSON might be single lines like "12" or ranges representing a block of code like "15-22").
 
-Evaluate if they identified the severe cross-file system design flaws, or if they got distracted by local syntax mechanics.
-Note: The candidate may have also left valid critiques on the README.md if they spotted inconsistencies between the stated spec and the actual code. Treat these as highly valuable Principal-level insights.
+Evaluate if they identified the severe cross-file system design flaws appropriate for a %1$s level, or if they got distracted by minor mechanics.
+Note: The candidate may have also left valid critiques on the README.md. Treat these as highly valuable insights.
 
-Based on their performance, assign a numerical score out of 100, and a strict hiring signal.
+Provide your detailed feedback inline mapped exactly to the file names and line numbers.
+
+Use exactly these three categories for inline feedback:
+1. "Accurate": For valid critiques where the candidate correctly identified a flaw. Use the EXACT line key the candidate used.
+2. "Superfluous": For comments where the candidate focused on formatting or minor issues instead of %1$s-level architecture. Use the EXACT line key the candidate used.
+3. "Missed": For severe flaws the candidate completely failed to spot. Specify the specific line number or range where this missed flaw exists.
+
+Based on their performance against %1$s-level expectations, assign a numerical score out of 100, and a strict hiring signal.
 
 Return ONLY a raw JSON object. Do not wrap it in markdown.
 JSON Blueprint:
@@ -18,8 +25,14 @@ JSON Blueprint:
   "score": 85,
   "hireSignal": "Strong Hire",
   "overallVerdict": "A strict 3-sentence architectural review summary of their capability.",
-  "missedFlaws": ["Systemic flaw 1 missed...", "Systemic flaw 2 missed..."],
-  "superfluousComments": ["File X Line Y: Candidate focused on styling instead of the architectural flaw..."],
-  "validCritiques": ["File Z Line Y: Candidate accurately identified..."]
+  "inlineFeedback": [
+    {
+      "file": "ExampleFile.ext",
+      "line": "15-22",
+      "type": "Missed",
+      "comment": "You missed a critical race condition here..."
+    }
+  ]
 }
 // Note for hireSignal: It MUST be exactly one of: ["Strong Hire", "Hire", "Lean Hire", "No Hire"]
+// Note for type: It MUST be exactly one of: ["Accurate", "Missed", "Superfluous"]
