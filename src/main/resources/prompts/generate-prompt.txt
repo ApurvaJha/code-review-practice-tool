@@ -1,0 +1,25 @@
+Generate a unique, Staff/Principal-level Java architecture code review challenge.
+The system must be split across 2 to 4 distinct Java files (e.g., a Controller, a Service, and a Repository/Cache layer) to simulate a real multi-file PR.
+
+CRITICAL INSTRUCTION:
+The very first file in the 'files' array MUST be named 'README.md'.
+This README must act as the PR specification. It should briefly explain the intended business use-case, the expected behavior of the code, and what the system is *supposed* to do.
+Do NOT reveal, hint at, or spoil any of the intentional bugs in the README. Write it exactly as an engineer would write a fresh PR description.
+
+The accompanying Java code must look professional and clean but contain 3-5 critical, structural system design flaws spread across the files (e.g., domain leaks between layers, distributed state bugs, lack of transaction boundaries, or cross-file race conditions).
+
+Return ONLY a raw JSON object. Do not wrap it in markdown.
+JSON Blueprint:
+{
+  "description": "System architecture context, SLAs, scale requirements, and constraints.",
+  "files": [
+    {
+      "name": "README.md",
+      "content": "# System Overview\n\nThis PR introduces..."
+    },
+    {
+      "name": "OrderService.java",
+      "content": "package com.system;\n\npublic class OrderService {\n..."
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+You are a Principal Software Engineer evaluating a candidate's high-level code review on a multi-file Pull Request for a Staff/Principal level role.
+
+Original System Code (JSON Format):
+%s
+
+Candidate's Submitted Line Comments (JSON Format mapped by File Name -> Line Number OR Line Range -> Comment):
+%s
+(Note: Keys in the comments JSON might be single lines like "12" or ranges representing a block of code like "15-22").
+
+Evaluate if they identified the severe cross-file system design flaws, or if they got distracted by local syntax mechanics.
+Note: The candidate may have also left valid critiques on the README.md if they spotted inconsistencies between the stated spec and the actual code. Treat these as highly valuable Principal-level insights.
+
+Based on their performance, assign a numerical score out of 100, and a strict hiring signal.
+
+Return ONLY a raw JSON object. Do not wrap it in markdown.
+JSON Blueprint:
+{
+  "score": 85,
+  "hireSignal": "Strong Hire",
+  "overallVerdict": "A strict 3-sentence architectural review summary of their capability.",
+  "missedFlaws": ["Systemic flaw 1 missed...", "Systemic flaw 2 missed..."],
+  "superfluousComments": ["File X Line Y: Candidate focused on styling instead of the architectural flaw..."],
+  "validCritiques": ["File Z Line Y: Candidate accurately identified..."]
+}
+// Note for hireSignal: It MUST be exactly one of: ["Strong Hire", "Hire", "Lean Hire", "No Hire"]
