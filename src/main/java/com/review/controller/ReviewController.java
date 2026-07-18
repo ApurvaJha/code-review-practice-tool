@@ -19,12 +19,13 @@ public class ReviewController {
     @GetMapping(value = "/generate", produces = "application/json")
     public String getNextProblem(
             @RequestParam(defaultValue = "Java") String language,
-            @RequestParam(defaultValue = "Principal") String level) throws Exception {
+            @RequestParam(defaultValue = "Principal") String level,
+            @RequestParam(required = false) String topics) throws Exception {
 
         this.activeLanguage = language;
         this.activeLevel = level;
 
-        String problem = geminiService.generateProblem(language, level);
+        String problem = geminiService.generateProblem(language, level, topics);
         this.activeCodeState = problem;
         return problem;
     }

@@ -29,10 +29,18 @@ public class GeminiService {
         return new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
     }
 
-    public String generateProblem(String language, String level) throws Exception {
+    public String generateProblem(String language, String level, String topics) throws Exception {
         String promptTemplate = readResource(generatePromptResource);
-        // Inject level and language into the prompt
-        String prompt = String.format(promptTemplate, level, language);
+
+        String topicsInstruction;
+        if (topics == null || topics.trim().isEmpty()) {
+            topicsInstruction = "Select exactly 2 to 3 Focus Areas randomly from the list below.";
+        } else {
+            topicsInstruction = "You MUST strictly focus on the following user-selected areas: " + topics + ". Do NOT select any other areas outside of these.";
+        }
+
+        // Inject level (%1$s), language (%2$s), and the dynamic topics instruction (%3$s)
+        String prompt = String.format(promptTemplate, level, language, topicsInstruction);
 
         GenerateContentResponse response = client.models.generateContent(model, prompt, null);
         return cleanRawResponse(response.text());
@@ -40,7 +48,6 @@ public class GeminiService {
 
     public String evaluateReview(String language, String level, String targetCode, String candidateCommentsJson) throws Exception {
         String promptTemplate = readResource(evaluatePromptResource);
-        // Inject level, language, code, and comments into the prompt
         String prompt = String.format(promptTemplate, level, language, targetCode, candidateCommentsJson);
 
         GenerateContentResponse response = client.models.generateContent(model, prompt, null);

@@ -15,12 +15,18 @@
         h1 { margin: 0; font-size: 1.25rem; color: var(--accent); }
         .main-container { display: flex; flex: 1; overflow: hidden; }
 
-        .sidebar { width: 350px; min-width: 250px; max-width: 800px; display: flex; flex-direction: column; background: var(--bg-surface); overflow-y: auto; flex-shrink: 0; }
+        .sidebar { width: 350px; min-width: 250px; max-width: 800px; display: flex; flex-direction: column; background: var(--bg-surface); overflow-y: auto; overflow-x: hidden; flex-shrink: 0; }
         .sidebar-section { padding: 1.5rem; border-bottom: 1px solid var(--border-color); }
         .sidebar-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 1rem; font-weight: bold; }
 
         .dropdown { width: 100%; background: #0f172a; color: white; border: 1px solid var(--border-color); padding: 0.5rem; border-radius: 4px; margin-bottom: 0.75rem; font-family: sans-serif; }
         .dropdown:focus { outline: none; border-color: var(--accent); }
+
+        /* Interactive Tag Cloud for generation preferences */
+        .topic-selector { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1rem; }
+        .selectable-tag { background-color: #0f172a; border: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.7rem; padding: 4px 8px; border-radius: 4px; cursor: pointer; user-select: none; transition: all 0.2s; }
+        .selectable-tag:hover { border-color: var(--accent); color: var(--text-main); }
+        .selectable-tag.selected { background-color: rgba(56, 189, 248, 0.2); border-color: var(--accent); color: var(--accent); font-weight: bold; }
 
         .resizer { width: 6px; background-color: var(--bg-main); border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); cursor: col-resize; z-index: 10; transition: background-color 0.2s; }
         .resizer:hover, .resizer:active { background-color: var(--accent); }
@@ -29,13 +35,33 @@
         .file-item:hover { background-color: #334155; color: var(--text-main); }
         .file-item.active { background-color: rgba(56, 189, 248, 0.1); color: var(--accent); border-left: 3px solid var(--accent); border-radius: 0 4px 4px 0; }
 
-        /* New Badge Container & Circular Styling */
         .badge-container { float: right; display: flex; gap: 4px; align-items: center; }
         .comment-badge { font-size: 0.65rem; min-width: 14px; height: 16px; line-height: 16px; padding: 0 4px; border-radius: 10px; text-align: center; font-weight: bold; display: inline-block; }
         .badge-user { background: var(--accent); color: #0f172a; }
         .badge-accurate { background: #22c55e; color: #0f172a; }
         .badge-missed { background: #ef4444; color: white; }
         .badge-superfluous { background: #eab308; color: #0f172a; }
+
+        .topics-header { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; color: var(--text-muted); font-size: 0.85rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; transition: color 0.2s; }
+        .topics-header:hover { color: var(--text-main); }
+        .topics-header .icon { font-size: 0.7rem; transition: transform 0.2s; }
+        .topics-header.open .icon { transform: rotate(90deg); }
+
+        .focus-areas { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+        .focus-tag { position: relative; background-color: #334155; color: var(--text-main); font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; cursor: help; display: flex; align-items: center; gap: 4px; border: 1px solid #475569; }
+        .focus-tag:hover { background-color: #475569; border-color: var(--accent); color: white; }
+        .focus-tag::before { content: "🎯"; font-size: 0.7rem; }
+
+        .focus-tag .tooltip-text {
+            visibility: hidden; background-color: #0f172a; color: #e2e8f0; text-align: left;
+            border: 1px solid var(--accent); border-radius: 6px; padding: 10px; position: absolute;
+            z-index: 100; top: 120%; left: 0; width: max-content; max-width: 250px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5); font-size: 0.75rem; line-height: 1.4;
+            white-space: normal; font-family: sans-serif; font-weight: normal; text-transform: none;
+            letter-spacing: normal; opacity: 0; transition: opacity 0.2s; pointer-events: none;
+        }
+        .focus-tag:hover .tooltip-text { visibility: visible; opacity: 1; }
 
         .code-pane { flex: 1; background-color: var(--code-bg); overflow-y: auto; display: flex; flex-direction: column; min-width: 300px; }
         .file-header { padding: 1rem; background: #131b2c; border-bottom: 1px solid var(--border-color); font-family: monospace; color: var(--accent); display: flex; justify-content: space-between; }
@@ -114,14 +140,39 @@
                 <option value="Kotlin">Kotlin</option>
             </select>
 
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem; margin-top: 0.5rem;">
+                Select custom focus areas (leave blank for random):
+            </div>
+            <div class="topic-selector" id="user-topics">
+                <div class="selectable-tag" data-val="Bugs and logical errors">Bugs & Logic</div>
+                <div class="selectable-tag" data-val="Performance problems">Performance</div>
+                <div class="selectable-tag" data-val="Security issues">Security</div>
+                <div class="selectable-tag" data-val="Missing abstractions">Abstractions</div>
+                <div class="selectable-tag" data-val="Refactoring to code needs">Refactoring</div>
+                <div class="selectable-tag" data-val="Concurrency and synchronization">Concurrency</div>
+                <div class="selectable-tag" data-val="Backward compatibility">Compatibility</div>
+                <div class="selectable-tag" data-val="Resilience and fault-tolerance">Resilience</div>
+                <div class="selectable-tag" data-val="Resource management">Resource Mgmt</div>
+                <div class="selectable-tag" data-val="Error handling strategy">Error Handling</div>
+                <div class="selectable-tag" data-val="Code testability">Testability</div>
+            </div>
+
             <button class="btn btn-secondary" onclick="generateChallenge()">Generate Scenario</button>
         </div>
 
         <div class="sidebar-section">
             <div class="sidebar-title">System Context</div>
             <div id="description-box" style="font-size: 0.9rem; line-height: 1.5; color: var(--text-muted);">
-                Select your level and language, then click Generate Scenario to build the review environment.
+                Select your parameters, then click Generate Scenario to build the review environment.
             </div>
+        </div>
+
+        <div class="sidebar-section" id="topics-section" style="display: none; padding-top: 0.5rem; padding-bottom: 1.5rem;">
+            <div class="topics-header" onclick="toggleTopics()">
+                <span class="icon" id="topics-icon">▶</span>
+                <span>Topics Built into Scenario</span>
+            </div>
+            <div id="focus-areas-container" class="focus-areas" style="display: none;"></div>
         </div>
 
         <div class="sidebar-section">
@@ -147,25 +198,32 @@
 </div>
 
 <script>
+    // Resizer Logic
     const resizer = document.getElementById('resizer');
     const sidebar = document.getElementById('sidebar');
     let isResizingSidebar = false;
 
-    resizer.addEventListener('mousedown', () => {
-        isResizingSidebar = true;
-        document.body.classList.add('is-resizing');
+    resizer.addEventListener('mousedown', () => { isResizingSidebar = true; document.body.classList.add('is-resizing'); });
+    window.addEventListener('mousemove', (e) => { if (isResizingSidebar) sidebar.style.width = `${Math.max(250, Math.min(e.clientX, 800))}px`; });
+    window.addEventListener('mouseup', () => { if (isResizingSidebar) { isResizingSidebar = false; document.body.classList.remove('is-resizing'); }});
+
+    // Tag Selection Logic
+    document.querySelectorAll('.selectable-tag').forEach(tag => {
+        tag.onclick = () => tag.classList.toggle('selected');
     });
-    window.addEventListener('mousemove', (e) => {
-        if (!isResizingSidebar) return;
-        const newWidth = Math.max(250, Math.min(e.clientX, 800));
-        sidebar.style.width = `${newWidth}px`;
-    });
-    window.addEventListener('mouseup', () => {
-        if (isResizingSidebar) {
-            isResizingSidebar = false;
-            document.body.classList.remove('is-resizing');
+
+    // Accordion Logic
+    function toggleTopics() {
+        const container = document.getElementById('focus-areas-container');
+        const header = document.querySelector('.topics-header');
+        if (container.style.display === 'none') {
+            container.style.display = 'flex';
+            header.classList.add('open');
+        } else {
+            container.style.display = 'none';
+            header.classList.remove('open');
         }
-    });
+    }
 
     let activeFiles = [];
     let currentFileName = null;
@@ -180,7 +238,18 @@
         const lang = document.getElementById('language-select').value;
         const lvl = document.getElementById('level-select').value;
 
+        // Extract strictly selected topics
+        const selectedTopics = Array.from(document.querySelectorAll('.selectable-tag.selected'))
+            .map(t => t.getAttribute('data-val'))
+            .join(', ');
+
         document.getElementById('description-box').innerText = `Booting up ${lvl}-level ${lang} challenge...`;
+
+        document.getElementById('topics-section').style.display = 'none';
+        document.getElementById('focus-areas-container').innerHTML = '';
+        document.getElementById('focus-areas-container').style.display = 'none';
+        document.querySelector('.topics-header').classList.remove('open');
+
         document.getElementById('code-canvas').innerHTML = '';
         document.getElementById('evaluation-output').innerHTML = '';
         document.getElementById('current-file-header').innerHTML = 'Generating...';
@@ -191,18 +260,38 @@
         renderFileExplorer();
 
         try {
-            const response = await fetch(`/api/generate?language=${encodeURIComponent(lang)}&level=${encodeURIComponent(lvl)}`);
+            // Pass the topics string to the backend
+            const response = await fetch(`/api/generate?language=${encodeURIComponent(lang)}&level=${encodeURIComponent(lvl)}&topics=${encodeURIComponent(selectedTopics)}`);
             const data = await response.json();
 
             document.getElementById('description-box').innerText = data.description;
-            activeFiles = data.files || [];
 
+            const focusContainer = document.getElementById('focus-areas-container');
+            if (data.focusAreas && Array.isArray(data.focusAreas) && data.focusAreas.length > 0) {
+                document.getElementById('topics-section').style.display = 'block';
+                data.focusAreas.forEach(area => {
+                    const tagContainer = document.createElement('div');
+                    tagContainer.className = 'focus-tag';
+
+                    const tagText = document.createTextNode(area.tag);
+                    tagContainer.appendChild(tagText);
+
+                    const tooltipBox = document.createElement('span');
+                    tooltipBox.className = 'tooltip-text';
+                    tooltipBox.innerText = area.description;
+                    tagContainer.appendChild(tooltipBox);
+
+                    focusContainer.appendChild(tagContainer);
+                });
+            }
+
+            activeFiles = data.files || [];
             activeFiles.forEach(f => { commentsByFile[f.name] = {}; });
             renderFileExplorer();
 
             if (activeFiles.length > 0) switchFile(activeFiles[0].name);
         } catch (e) {
-            document.getElementById('description-box').innerText = "Failed loading scenario. Ensure backend is running.";
+            document.getElementById('description-box').innerText = "Failed loading scenario. Ensure backend is running and API key is valid.";
         }
     }
 
@@ -215,12 +304,10 @@
             item.className = 'file-item' + (currentFileName === file.name ? ' active' : '');
             item.onclick = () => switchFile(file.name);
 
-            // 1. Calculate User Comments
             let userCount = 0;
             const fileComments = commentsByFile[file.name] || {};
             for (let key in fileComments) { if (fileComments[key]) userCount++; }
 
-            // 2. Calculate AI Evaluation Breakdown
             let accurateCount = 0;
             let superfluousCount = 0;
             let missedCount = 0;
@@ -235,7 +322,6 @@
                 });
             }
 
-            // 3. Build the dynamically colored badges
             let badgesHtml = '<div class="badge-container">';
             if (userCount > 0) badgesHtml += `<span class="comment-badge badge-user" title="Your Comments">${userCount}</span>`;
             if (accurateCount > 0) badgesHtml += `<span class="comment-badge badge-accurate" title="Accurate Insights">${accurateCount}</span>`;
@@ -449,7 +535,7 @@
                 body: JSON.stringify(cleanComments)
             });
             activeEvaluation = await res.json();
-            reRenderCanvas(); // This now automatically updates the badges in the sidebar too!
+            reRenderCanvas();
             const signalColor = getSignalColor(activeEvaluation.hireSignal);
 
             outBox.innerHTML = `
@@ -467,10 +553,6 @@
                 <div class="eval-section" style="margin-top: 0;">
                     <div class="eval-title">System Verdict</div>
                     <p style="font-size:0.9rem; line-height:1.5; color:var(--text-main); margin:0;">${activeEvaluation.overallVerdict}</p>
-                </div>
-
-                <div style="margin-top: 1rem; color: var(--accent); font-size: 0.9rem; line-height: 1.5;">
-                    👉 <strong>Check the files!</strong> Detailed evaluation has been added directly beneath the code lines in the active files.
                 </div>
             `;
         } catch(e) {

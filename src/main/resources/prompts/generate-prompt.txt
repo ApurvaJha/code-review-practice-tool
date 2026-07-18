@@ -1,17 +1,41 @@
 Generate a unique, %1$s-level %2$s code review challenge.
 The system must be split across 2 to 4 distinct %2$s files to simulate a real multi-file PR.
 
-CRITICAL INSTRUCTION:
+CRITICAL INSTRUCTION FOR README:
 The very first file in the 'files' array MUST be named 'README.md'.
-This README must act as the PR specification. It should briefly explain the intended business use-case, the expected behavior of the code, and what the system is *supposed* to do.
+This README must act as the PR specification. It MUST explicitly contain the public interfaces (API endpoints, public methods, or message contracts) and their expected use cases.
 Do NOT reveal, hint at, or spoil any of the intentional bugs in the README. Write it exactly as an engineer would write a fresh PR description.
 
-The accompanying %2$s code must look professional and clean but contain 3-5 critical flaws appropriate for a %1$s engineer to catch (e.g., domain leaks, distributed state bugs, concurrency issues, performance bottlenecks, or architectural anti-patterns).
+CRITICAL INSTRUCTION FOR CODE COMMENTS (NO SPOILERS):
+You MUST NOT include any code comments that point out, hint at, or explain the intentional flaws (e.g., absolutely no "// FLAW:" or "// Bug:" comments). The generated code must look like a genuine submission from an engineer who believes their code is perfectly fine and production-ready. The flaws must be completely silent and hidden in the structure, logic, and architecture.
+
+FOCUS AREAS INSTRUCTION:
+%3$s
+Ensure the 3-5 critical flaws in the code are strictly derived from these focus areas.
+
+Here is the reference list of possible focus areas and what they comprise of:
+- Bugs and logical errors: Edge case handling, off-by-one errors, state mismanagement, incorrect business logic implementation, and improper data validation before processing.
+- Performance problems: Algorithmic complexity, N+1 database queries, missing or ineffective caching strategies, inefficient data serialization, and heavy processing on the main thread.
+- Security issues: SQL/NoSQL injection vulnerabilities, insecure direct object references (IDOR), hardcoded secrets or credentials, inadequate access control, and cross-site scripting (XSS).
+- Missing abstractions: Tight coupling between components, leaked domain boundaries, duplicated logic across microservices, and violation of SOLID principles.
+- Refactoring to code needs: Unclear naming conventions, "magic numbers", high cyclomatic complexity, and leaving behind dead code.
+- Concurrency and synchronization: Race conditions, deadlocks, improper lock scopes, using non-thread-safe collections for shared state, and misconfigured thread pools.
+- Backward compatibility: Breaking API contracts, destructive database schema migrations, modifying asynchronous event payloads.
+- Resilience and fault-tolerance: Missing timeouts, absent circuit breakers, aggressive retries without backoff/jitter, lacking fallback paths.
+- Resource management: Unclosed connections, memory leaks, unreleased file handles, unbounded queue growth.
+- Error handling strategy: Swallowing exceptions, catching generic exceptions, returning misleading HTTP status codes, leaking stack traces.
+- Code testability: Hardcoded instantiation, mocking framework instead of domain boundaries, relying on system time instead of injected clocks.
 
 Return ONLY a raw JSON object. Do not wrap it in markdown.
 JSON Blueprint:
 {
   "description": "System architecture context, SLAs, scale requirements, and constraints.",
+  "focusAreas": [
+    {
+      "tag": "Name of Selected Focus Area",
+      "description": "The exact description provided above for this area"
+    }
+  ],
   "files": [
     {
       "name": "README.md",
