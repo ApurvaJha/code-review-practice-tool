@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Architectural Code Review Arena</title>
+    <style>
+        :root {
+            --bg-main: #0f172a; --bg-surface: #1e293b; --border-color: #334155;
+            --text-main: #f8fafc; --text-muted: #94a3b8; --accent: #38bdf8; --code-bg: #0b0f19;
+        }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-main); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; }
+
+        /* State class applied to body during sidebar resize */
+        body.is-resizing { cursor: col-resize !important; user-select: none !important; }
+
+        header { background-color: var(--bg-surface); padding: 1rem 2rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        h1 { margin: 0; font-size: 1.25rem; color: var(--accent); }
+        .main-container { display: flex; flex: 1; overflow: hidden; }
+
+        /* Sidebar is now adjustable via inline styles from JS */
+        .sidebar { width: 350px; min-width: 250px; max-width: 800px; display: flex; flex-direction: column; background: var(--bg-surface); overflow-y: auto; flex-shrink: 0; }
+        .sidebar-section { padding: 1.5rem; border-bottom: 1px solid var(--border-color); }
+        .sidebar-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 1rem; font-weight: bold; }
+
+        /* The Draggable Resizer */
+        .resizer { width: 6px; background-color: var(--bg-main); border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); cursor: col-resize; z-index: 10; transition: background-color 0.2s; }
+        .resizer:hover, .resizer:active { background-color: var(--accent); }
+
+        .file-item { padding: 0.6rem 1rem; margin-bottom: 0.3rem; border-radius: 4px; cursor: pointer; color: var(--text-muted); font-family: monospace; font-size: 0.9rem; transition: background 0.2s; }
+        .file-item:hover { background-color: #334155; color: var(--text-main); }
+        .file-item.active { background-color: rgba(56, 189, 248, 0.1); color: var(--accent); border-left: 3px solid var(--accent); border-radius: 0 4px 4px 0; }
+        .file-item .comment-badge { background: var(--accent); color: #0f172a; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; float: right; font-weight: bold; }
+
+        .code-pane { flex: 1; background-color: var(--code-bg); overflow-y: auto; display: flex; flex-direction: column; min-width: 300px; }
+        .file-header { padding: 1rem; background: #131b2c; border-bottom: 1px solid var(--border-color); font-family: monospace; color: var(--accent); display: flex; justify-content: space-between; }
+        .file-header .hint { font-size: 0.8rem; color: var(--text-muted); font-family: sans-serif; }
+
+        /* user-select: none prevents native text copying so drag-to-comment is smooth anywhere on the text */
+        .code-wrapper { font-family: 'Fira Code', Consolas, Monaco, monospace; font-size: 0.9rem; padding: 1rem 0; user-select: none; }
+
+        .code-row { display: flex; align-items: flex-start; width: 100%; transition: background-color 0.1s; cursor: pointer; }
+        .code-row:hover { background-color: #1e293b; }
+
+        .code-row.highlighted { background-color: rgba(56, 189, 248, 0.15); }
+        .code-row.highlighted .ln { color: var(--accent); border-right-color: var(--accent); }
+
+        .code-row.selecting { background-color: rgba(56, 189, 248, 0.3); }
+        .code-row.selecting .ln { color: white; background-color: rgba(56, 189, 248, 0.4); }
+
+        .ln { width: 3rem; min-width: 3rem; text-align: right; padding-right: 1rem; color: #475569; border-right: 1px solid #1e293b; user-select: none; }
+        .code-row:hover .ln { color: white; }
+
+        .txt { padding-left: 1rem; white-space: pre-wrap; word-break: break-all; color: #e2e8f0; flex: 1; pointer-events: none; }
+
+        .comment-area { background: var(--bg-surface); padding: 0.75rem; border-left: 3px solid var(--accent); margin: 0.25rem 3rem 1rem 3rem; display: flex; align-items: center; gap: 0.5rem; cursor: default; }
+        .comment-area input { flex: 1; background: #0f172a; border: 1px solid var(--border-color); color: white; padding: 0.6rem; border-radius: 4px; font-family: sans-serif; user-select: text; }
+
+        .del-btn { background: transparent; border: none; cursor: pointer; font-size: 1.1rem; opacity: 0.6; transition: opacity 0.2s; }
+        .del-btn:hover { opacity: 1; }
+
+        .btn { background-color: var(--accent); color: #0f172a; border: none; padding: 0.6rem 1.2rem; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 1rem; }
+        .btn:hover { opacity: 0.9; }
+
+        .eval-section { margin-top: 1rem; background: #1e293b; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color); }
+        .eval-title { font-weight: bold; margin-bottom: 0.5rem; color: var(--accent); }
+        ul { margin: 0; padding-left: 1.2rem; color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; }
+        .scorecard { display: flex; gap: 1rem; margin-bottom: 1rem; }
+        .score-box { flex: 1; padding: 1rem; background: #0f172a; border-radius: 6px; text-align: center; border: 1px solid var(--border-color); }
+        .score-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.25rem; font-weight: bold; }
+        .score-value { font-size: 1.5rem; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Architectural Assessment Engine</h1>
+</header>
+
+<div class="main-container">
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-section">
+            <div class="sidebar-title">System Context</div>
+            <div id="description-box" style="font-size: 0.9rem; line-height: 1.5; color: var(--text-muted);">
+                Generating system architecture...
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-title">Pull Request Files</div>
+            <div id="file-list"></div>
+        </div>
+
+        <div class="sidebar-section" style="border-bottom: none;">
+            <button class="btn" onclick="submitReview()">Analyze Submission</button>
+            <div id="evaluation-output" style="margin-top: 1.5rem; font-size: 0.9rem;"></div>
+        </div>
+    </div>
+
+    <!-- The Resizer Handle -->
+    <div class="resizer" id="resizer"></div>
+
+    <div class="code-pane">
+        <div class="file-header">
+            <span id="current-file-header">Select a file to begin reviewing</span>
+            <span class="hint">💡 Click and drag anywhere on the code to select lines</span>
+        </div>
+        <div class="code-wrapper" id="code-canvas"></div>
+    </div>
+</div>
+
+<script>
+    // --- Resizer Logic ---
+    const resizer = document.getElementById('resizer');
+    const sidebar = document.getElementById('sidebar');
+    let isResizingSidebar = false;
+
+    resizer.addEventListener('mousedown', (e) => {
+        isResizingSidebar = true;
+        document.body.classList.add('is-resizing');
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isResizingSidebar) return;
+        // Restrict minimum and maximum width to prevent breaking the UI layout
+        const newWidth = Math.max(250, Math.min(e.clientX, 800));
+        sidebar.style.width = `${newWidth}px`;
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (isResizingSidebar) {
+            isResizingSidebar = false;
+            document.body.classList.remove('is-resizing');
+        }
+    });
+
+    // --- Core Application Logic ---
+    let activeFiles = [];
+    let currentFileName = null;
+    let currentCodeText = "";
+    let commentsByFile = {};
+
+    // Drag selection state
+    let isDraggingCode = false;
+    let dragStartLine = null;
+    let dragCurrentLine = null;
+
+    window.onload = async () => {
+        try {
+            const response = await fetch('/api/generate');
+            const data = await response.json();
+
+            document.getElementById('description-box').innerText = data.description;
+            activeFiles = data.files || [];
+
+            activeFiles.forEach(f => { commentsByFile[f.name] = {}; });
+            renderFileExplorer();
+
+            if (activeFiles.length > 0) switchFile(activeFiles[0].name);
+        } catch (e) {
+            document.getElementById('description-box').innerText = "Failed loading scenario. Ensure backend is running.";
+        }
+    };
+
+    function renderFileExplorer() {
+        const fileList = document.getElementById('file-list');
+        fileList.innerHTML = '';
+
+        activeFiles.forEach(file => {
+            const item = document.createElement('div');
+            item.className = 'file-item' + (currentFileName === file.name ? ' active' : '');
+            item.onclick = () => switchFile(file.name);
+
+            let count = 0;
+            const fileComments = commentsByFile[file.name] || {};
+            for (let key in fileComments) { if (fileComments[key]) count++; }
+
+            let badgeHtml = count > 0 ? `<span class="comment-badge">${count}</span>` : '';
+            item.innerHTML = `📄 ${file.name} ${badgeHtml}`;
+            fileList.appendChild(item);
+        });
+    }
+
+    function switchFile(filename) {
+        currentFileName = filename;
+        renderFileExplorer();
+        document.getElementById('current-file-header').innerText = `Viewing: ${filename}`;
+
+        const fileData = activeFiles.find(f => f.name === filename);
+        if (fileData) {
+            currentCodeText = fileData.content;
+            reRenderCanvas();
+        }
+    }
+
+    function isLineInSavedRange(lineNum) {
+        const fileComments = commentsByFile[currentFileName] || {};
+        for (let key in fileComments) {
+            if (fileComments[key] === null || fileComments[key] === undefined) continue;
+            const parts = key.split('-');
+            const start = parseInt(parts[0]);
+            const end = parts.length > 1 ? parseInt(parts[1]) : start;
+            if (lineNum >= start && lineNum <= end) return true;
+        }
+        return false;
+    }
+
+    function reRenderCanvas() {
+        const canvas = document.getElementById('code-canvas');
+        canvas.innerHTML = '';
+        const lines = currentCodeText.split('\n');
+
+        const fileComments = commentsByFile[currentFileName] || {};
+        const activeRanges = Object.keys(fileComments).map(key => {
+            const parts = key.split('-');
+            return {
+                key: key,
+                start: parseInt(parts[0]),
+                end: parts.length > 1 ? parseInt(parts[1]) : parseInt(parts[0]),
+                text: fileComments[key]
+            };
+        });
+
+        lines.forEach((lineText, idx) => {
+            const lineNum = idx + 1;
+
+            const row = document.createElement('div');
+            row.className = 'code-row';
+            row.setAttribute('data-line', lineNum);
+
+            if (isLineInSavedRange(lineNum)) row.classList.add('highlighted');
+
+            // Starts selection anywhere on the row (line number or code text)
+            row.onmousedown = (e) => {
+                // Ignore if clicking inside an existing comment input or delete button
+                if (e.target.closest('.comment-area')) return;
+
+                e.preventDefault();
+                isDraggingCode = true;
+                dragStartLine = lineNum;
+                dragCurrentLine = lineNum;
+                applyDragHighlight();
+            };
+
+            row.onmouseenter = () => {
+                if (isDraggingCode) {
+                    dragCurrentLine = lineNum;
+                    applyDragHighlight();
+                }
+            };
+
+            row.onmouseup = () => {
+                if (isDraggingCode) {
+                    isDraggingCode = false;
+                    finalizeSelection();
+                }
+            };
+
+            const ln = document.createElement('div');
+            ln.className = 'ln';
+            ln.innerText = lineNum;
+
+            const txt = document.createElement('div');
+            txt.className = 'txt';
+            txt.innerText = lineText || ' ';
+
+            row.appendChild(ln);
+            row.appendChild(txt);
+            canvas.appendChild(row);
+
+            // Render comment box
+            activeRanges.filter(r => r.end === lineNum && r.text !== null).forEach(r => {
+                const commentWrapper = document.createElement('div');
+                commentWrapper.className = 'comment-area';
+
+                const inputField = document.createElement('input');
+                inputField.value = r.text;
+                inputField.placeholder = `Commenting on line(s) ${r.key}...`;
+                inputField.setAttribute('data-key', r.key);
+
+                inputField.onblur = (e) => saveComment(r.key, e.target.value);
+                inputField.onkeydown = (e) => { if(e.key === 'Enter') inputField.blur(); };
+
+                const delBtn = document.createElement('button');
+                delBtn.innerText = '🗑️';
+                delBtn.className = 'del-btn';
+                delBtn.title = "Delete comment";
+                delBtn.onclick = () => saveComment(r.key, null);
+
+                commentWrapper.appendChild(inputField);
+                commentWrapper.appendChild(delBtn);
+                canvas.appendChild(commentWrapper);
+            });
+        });
+    }
+
+    function applyDragHighlight() {
+        const min = Math.min(dragStartLine, dragCurrentLine);
+        const max = Math.max(dragStartLine, dragCurrentLine);
+
+        document.querySelectorAll('.code-row').forEach(row => {
+            const ln = parseInt(row.getAttribute('data-line'));
+            if (ln >= min && ln <= max) {
+                row.classList.add('selecting');
+            } else {
+                row.classList.remove('selecting');
+            }
+        });
+    }
+
+    function finalizeSelection() {
+        const min = Math.min(dragStartLine, dragCurrentLine);
+        const max = Math.max(dragStartLine, dragCurrentLine);
+        const key = min === max ? `${min}` : `${min}-${max}`;
+
+        if (commentsByFile[currentFileName][key] === undefined) {
+            commentsByFile[currentFileName][key] = "";
+        }
+
+        dragStartLine = null;
+        dragCurrentLine = null;
+        reRenderCanvas();
+        renderFileExplorer();
+
+        setTimeout(() => {
+            const input = document.querySelector(`input[data-key="${key}"]`);
+            if (input) input.focus();
+        }, 50);
+    }
+
+    // Safety net: if you drag code selection outside the window
+    window.addEventListener('mouseup', () => {
+        if (isDraggingCode) {
+            isDraggingCode = false;
+            finalizeSelection();
+        }
+    });
+
+    function saveComment(key, value) {
+        if (value === null || !value.trim()) {
+            delete commentsByFile[currentFileName][key];
+        } else {
+            commentsByFile[currentFileName][key] = value;
+        }
+        reRenderCanvas();
+        renderFileExplorer();
+    }
+
+    function getSignalColor(signal) {
+        const s = (signal || '').toLowerCase();
+        if (s.includes('strong hire')) return '#22c55e';
+        if (s.includes('hire') && !s.includes('no') && !s.includes('lean')) return '#84cc16';
+        if (s.includes('lean hire')) return '#eab308';
+        if (s.includes('no hire')) return '#ef4444';
+        return 'var(--accent)';
+    }
+
+    async function submitReview() {
+        const outBox = document.getElementById('evaluation-output');
+        outBox.innerHTML = '<span style="color: var(--accent);">Generating Principal-level evaluation matrix...</span>';
+
+        let cleanComments = JSON.parse(JSON.stringify(commentsByFile));
+        for (let file in cleanComments) {
+            for (let key in cleanComments[file]) {
+                if (!cleanComments[file][key]) delete cleanComments[file][key];
+            }
+        }
+
+        try {
+            const res = await fetch('/api/evaluate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(cleanComments)
+            });
+            const evaluation = await res.json();
+            const signalColor = getSignalColor(evaluation.hireSignal);
+
+            outBox.innerHTML = `
+                <div class="scorecard">
+                    <div class="score-box">
+                        <div class="score-label">Rigor Score</div>
+                        <div class="score-value" style="color: var(--text-main);">${evaluation.score || 0}/100</div>
+                    </div>
+                    <div class="score-box" style="border-color: ${signalColor}40; background: ${signalColor}10;">
+                        <div class="score-label" style="color: ${signalColor};">Hiring Signal</div>
+                        <div class="score-value" style="color: ${signalColor};">${evaluation.hireSignal || 'Pending'}</div>
+                    </div>
+                </div>
+
+                <div class="eval-section" style="margin-top: 0;">
+                    <div class="eval-title">System Verdict</div>
+                    <p style="font-size:0.9rem; line-height:1.5; color:var(--text-main); margin:0;">${evaluation.overallVerdict}</p>
+                </div>
+                <div class="eval-section">
+                    <div class="eval-title">Missed Systemic Risks</div>
+                    <ul>${(evaluation.missedFlaws || []).map(f => `<li>${f}</li>`).join('') || '<li>None</li>'}</ul>
+                </div>
+                <div class="eval-section">
+                    <div class="eval-title">Valid Critiques Logged</div>
+                    <ul>${(evaluation.validCritiques || []).map(c => `<li>${c}</li>`).join('') || '<li>None</li>'}</ul>
+                </div>
+                <div class="eval-section">
+                    <div class="eval-title">Superfluous Focus</div>
+                    <ul>${(evaluation.superfluousComments || []).map(s => `<li>${s}</li>`).join('') || '<li>None</li>'}</ul>
+                </div>
+            `;
+        } catch(e) {
+            outBox.innerText = "Error parsing evaluation matrix.";
+        }
+    }
+</script>
+</body>
+</html>
