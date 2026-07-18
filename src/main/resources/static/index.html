@@ -19,20 +19,29 @@
         .sidebar-section { padding: 1.5rem; border-bottom: 1px solid var(--border-color); }
         .sidebar-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 1rem; font-weight: bold; }
 
+        .dropdown { width: 100%; background: #0f172a; color: white; border: 1px solid var(--border-color); padding: 0.5rem; border-radius: 4px; margin-bottom: 0.75rem; font-family: sans-serif; }
+        .dropdown:focus { outline: none; border-color: var(--accent); }
+
         .resizer { width: 6px; background-color: var(--bg-main); border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); cursor: col-resize; z-index: 10; transition: background-color 0.2s; }
         .resizer:hover, .resizer:active { background-color: var(--accent); }
 
         .file-item { padding: 0.6rem 1rem; margin-bottom: 0.3rem; border-radius: 4px; cursor: pointer; color: var(--text-muted); font-family: monospace; font-size: 0.9rem; transition: background 0.2s; }
         .file-item:hover { background-color: #334155; color: var(--text-main); }
         .file-item.active { background-color: rgba(56, 189, 248, 0.1); color: var(--accent); border-left: 3px solid var(--accent); border-radius: 0 4px 4px 0; }
-        .file-item .comment-badge { background: var(--accent); color: #0f172a; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; float: right; font-weight: bold; }
+
+        /* New Badge Container & Circular Styling */
+        .badge-container { float: right; display: flex; gap: 4px; align-items: center; }
+        .comment-badge { font-size: 0.65rem; min-width: 14px; height: 16px; line-height: 16px; padding: 0 4px; border-radius: 10px; text-align: center; font-weight: bold; display: inline-block; }
+        .badge-user { background: var(--accent); color: #0f172a; }
+        .badge-accurate { background: #22c55e; color: #0f172a; }
+        .badge-missed { background: #ef4444; color: white; }
+        .badge-superfluous { background: #eab308; color: #0f172a; }
 
         .code-pane { flex: 1; background-color: var(--code-bg); overflow-y: auto; display: flex; flex-direction: column; min-width: 300px; }
         .file-header { padding: 1rem; background: #131b2c; border-bottom: 1px solid var(--border-color); font-family: monospace; color: var(--accent); display: flex; justify-content: space-between; }
         .file-header .hint { font-size: 0.8rem; color: var(--text-muted); font-family: sans-serif; }
 
         .code-wrapper { font-family: 'Fira Code', Consolas, Monaco, monospace; font-size: 0.9rem; padding: 1rem 0; user-select: none; }
-
         .code-row { display: flex; align-items: flex-start; width: 100%; transition: background-color 0.1s; cursor: pointer; }
         .code-row:hover { background-color: #1e293b; }
         .code-row.highlighted { background-color: rgba(56, 189, 248, 0.15); }
@@ -44,29 +53,28 @@
         .code-row:hover .ln { color: white; }
         .txt { padding-left: 1rem; white-space: pre-wrap; word-break: break-all; color: #e2e8f0; flex: 1; pointer-events: none; }
 
-        /* User Comments */
         .comment-area { background: var(--bg-surface); padding: 0.75rem; border-left: 3px solid var(--accent); margin: 0.25rem 3rem 1rem 3rem; display: flex; align-items: center; gap: 0.5rem; cursor: default; }
         .comment-area input { flex: 1; background: #0f172a; border: 1px solid var(--border-color); color: white; padding: 0.6rem; border-radius: 4px; font-family: sans-serif; user-select: text; }
         .del-btn { background: transparent; border: none; cursor: pointer; font-size: 1.1rem; opacity: 0.6; transition: opacity 0.2s; }
         .del-btn:hover { opacity: 1; }
 
-        /* AI Inline Feedback Classes */
         .ai-feedback { margin: 0.25rem 3rem 1rem 3rem; padding: 0.75rem; border-radius: 4px; border-left: 4px solid; display: flex; align-items: flex-start; gap: 0.75rem; font-family: sans-serif; }
         .ai-accurate { background: rgba(34, 197, 94, 0.1); border-color: #22c55e; }
         .ai-missed { background: rgba(239, 68, 68, 0.1); border-color: #ef4444; }
         .ai-superfluous { background: rgba(234, 179, 8, 0.1); border-color: #eab308; }
-
         .ai-tag { font-weight: bold; text-transform: uppercase; font-size: 0.7rem; padding: 3px 6px; border-radius: 4px; margin-top: 2px; }
         .tag-accurate { background: #22c55e; color: #0f172a; }
         .tag-missed { background: #ef4444; color: #0f172a; }
         .tag-superfluous { background: #eab308; color: #0f172a; }
 
-        .btn { background-color: var(--accent); color: #0f172a; border: none; padding: 0.6rem 1.2rem; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 1rem; }
+        .btn { background-color: var(--accent); color: #0f172a; border: none; padding: 0.6rem 1.2rem; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%; }
         .btn:hover { opacity: 0.9; }
+        .btn-secondary { background-color: #334155; color: white; margin-top: 0.5rem; }
+        .btn-secondary:hover { background-color: #475569; }
 
         .eval-section { margin-top: 1rem; background: #1e293b; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color); }
         .eval-title { font-weight: bold; margin-bottom: 0.5rem; color: var(--accent); }
-
+        ul { margin: 0; padding-left: 1.2rem; color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; }
         .scorecard { display: flex; gap: 1rem; margin-bottom: 1rem; }
         .score-box { flex: 1; padding: 1rem; background: #0f172a; border-radius: 6px; text-align: center; border: 1px solid var(--border-color); }
         .score-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.25rem; font-weight: bold; }
@@ -82,9 +90,37 @@
 <div class="main-container">
     <div class="sidebar" id="sidebar">
         <div class="sidebar-section">
+            <div class="sidebar-title">Challenge Settings</div>
+
+            <select id="level-select" class="dropdown">
+                <option value="Junior">Junior</option>
+                <option value="Senior">Senior</option>
+                <option value="Staff">Staff</option>
+                <option value="Principal" selected>Principal</option>
+                <option value="Engineering Manager">Engineering Manager</option>
+                <option value="Senior Engineering Manager">Senior Engineering Manager</option>
+            </select>
+
+            <select id="language-select" class="dropdown">
+                <option value="Java" selected>Java</option>
+                <option value="Python">Python</option>
+                <option value="Go">Go</option>
+                <option value="JavaScript">JavaScript</option>
+                <option value="TypeScript">TypeScript</option>
+                <option value="C++">C++</option>
+                <option value="C#">C#</option>
+                <option value="Ruby">Ruby</option>
+                <option value="Rust">Rust</option>
+                <option value="Kotlin">Kotlin</option>
+            </select>
+
+            <button class="btn btn-secondary" onclick="generateChallenge()">Generate Scenario</button>
+        </div>
+
+        <div class="sidebar-section">
             <div class="sidebar-title">System Context</div>
             <div id="description-box" style="font-size: 0.9rem; line-height: 1.5; color: var(--text-muted);">
-                Generating system architecture...
+                Select your level and language, then click Generate Scenario to build the review environment.
             </div>
         </div>
 
@@ -103,7 +139,7 @@
 
     <div class="code-pane">
         <div class="file-header">
-            <span id="current-file-header">Select a file to begin reviewing</span>
+            <span id="current-file-header">Waiting for scenario selection...</span>
             <span class="hint">💡 Click and drag anywhere on the code to select lines</span>
         </div>
         <div class="code-wrapper" id="code-canvas"></div>
@@ -136,14 +172,26 @@
     let currentCodeText = "";
     let commentsByFile = {};
     let activeEvaluation = null;
-
     let isDraggingCode = false;
     let dragStartLine = null;
     let dragCurrentLine = null;
 
-    window.onload = async () => {
+    async function generateChallenge() {
+        const lang = document.getElementById('language-select').value;
+        const lvl = document.getElementById('level-select').value;
+
+        document.getElementById('description-box').innerText = `Booting up ${lvl}-level ${lang} challenge...`;
+        document.getElementById('code-canvas').innerHTML = '';
+        document.getElementById('evaluation-output').innerHTML = '';
+        document.getElementById('current-file-header').innerHTML = 'Generating...';
+
+        activeFiles = [];
+        commentsByFile = {};
+        activeEvaluation = null;
+        renderFileExplorer();
+
         try {
-            const response = await fetch('/api/generate');
+            const response = await fetch(`/api/generate?language=${encodeURIComponent(lang)}&level=${encodeURIComponent(lvl)}`);
             const data = await response.json();
 
             document.getElementById('description-box').innerText = data.description;
@@ -154,9 +202,9 @@
 
             if (activeFiles.length > 0) switchFile(activeFiles[0].name);
         } catch (e) {
-            document.getElementById('description-box').innerText = "Failed loading scenario.";
+            document.getElementById('description-box').innerText = "Failed loading scenario. Ensure backend is running.";
         }
-    };
+    }
 
     function renderFileExplorer() {
         const fileList = document.getElementById('file-list');
@@ -167,12 +215,35 @@
             item.className = 'file-item' + (currentFileName === file.name ? ' active' : '');
             item.onclick = () => switchFile(file.name);
 
-            let count = 0;
+            // 1. Calculate User Comments
+            let userCount = 0;
             const fileComments = commentsByFile[file.name] || {};
-            for (let key in fileComments) { if (fileComments[key]) count++; }
+            for (let key in fileComments) { if (fileComments[key]) userCount++; }
 
-            let badgeHtml = count > 0 ? `<span class="comment-badge">${count}</span>` : '';
-            item.innerHTML = `📄 ${file.name} ${badgeHtml}`;
+            // 2. Calculate AI Evaluation Breakdown
+            let accurateCount = 0;
+            let superfluousCount = 0;
+            let missedCount = 0;
+
+            if (activeEvaluation && activeEvaluation.inlineFeedback) {
+                const aiFeedbacks = activeEvaluation.inlineFeedback.filter(f => f.file === file.name);
+                aiFeedbacks.forEach(f => {
+                    const type = (f.type || '').toLowerCase();
+                    if (type === 'accurate') accurateCount++;
+                    else if (type === 'missed') missedCount++;
+                    else if (type === 'superfluous') superfluousCount++;
+                });
+            }
+
+            // 3. Build the dynamically colored badges
+            let badgesHtml = '<div class="badge-container">';
+            if (userCount > 0) badgesHtml += `<span class="comment-badge badge-user" title="Your Comments">${userCount}</span>`;
+            if (accurateCount > 0) badgesHtml += `<span class="comment-badge badge-accurate" title="Accurate Insights">${accurateCount}</span>`;
+            if (superfluousCount > 0) badgesHtml += `<span class="comment-badge badge-superfluous" title="Superfluous Focus">${superfluousCount}</span>`;
+            if (missedCount > 0) badgesHtml += `<span class="comment-badge badge-missed" title="Missed Flaws">${missedCount}</span>`;
+            badgesHtml += '</div>';
+
+            item.innerHTML = `📄 ${file.name} ${badgesHtml}`;
             fileList.appendChild(item);
         });
     }
@@ -219,7 +290,6 @@
 
         lines.forEach((lineText, idx) => {
             const lineNum = idx + 1;
-
             const row = document.createElement('div');
             row.className = 'code-row';
             row.setAttribute('data-line', lineNum);
@@ -234,12 +304,8 @@
                 dragCurrentLine = lineNum;
                 applyDragHighlight();
             };
-            row.onmouseenter = () => {
-                if (isDraggingCode) { dragCurrentLine = lineNum; applyDragHighlight(); }
-            };
-            row.onmouseup = () => {
-                if (isDraggingCode) { isDraggingCode = false; finalizeSelection(); }
-            };
+            row.onmouseenter = () => { if (isDraggingCode) { dragCurrentLine = lineNum; applyDragHighlight(); } };
+            row.onmouseup = () => { if (isDraggingCode) { isDraggingCode = false; finalizeSelection(); } };
 
             const ln = document.createElement('div');
             ln.className = 'ln';
@@ -253,7 +319,7 @@
             row.appendChild(txt);
             canvas.appendChild(row);
 
-            // 1. Draw User Comments
+            // User Comments
             activeRanges.filter(r => r.end === lineNum && r.text !== null).forEach(r => {
                 const commentWrapper = document.createElement('div');
                 commentWrapper.className = 'comment-area';
@@ -276,10 +342,9 @@
                 canvas.appendChild(commentWrapper);
             });
 
-            // 2. Draw AI Inline Feedback directly beneath user comments
+            // AI Inline Feedback
             if (activeEvaluation && activeEvaluation.inlineFeedback) {
                 const aiFeedbacks = activeEvaluation.inlineFeedback.filter(f => f.file === currentFileName);
-
                 const matchingFeedbacks = aiFeedbacks.filter(f => {
                     const parts = String(f.line).split('-');
                     const endLine = parts.length > 1 ? parseInt(parts[1]) : parseInt(parts[0]);
@@ -288,7 +353,6 @@
 
                 matchingFeedbacks.forEach(f => {
                     const typeClass = (f.type || 'Missed').toLowerCase();
-
                     const aiWrapper = document.createElement('div');
                     aiWrapper.className = `ai-feedback ai-${typeClass}`;
 
@@ -334,9 +398,7 @@
         const max = Math.max(dragStartLine, dragCurrentLine);
         const key = min === max ? `${min}` : `${min}-${max}`;
 
-        if (commentsByFile[currentFileName][key] === undefined) {
-            commentsByFile[currentFileName][key] = "";
-        }
+        if (commentsByFile[currentFileName][key] === undefined) commentsByFile[currentFileName][key] = "";
 
         dragStartLine = null;
         dragCurrentLine = null;
@@ -371,7 +433,7 @@
 
     async function submitReview() {
         const outBox = document.getElementById('evaluation-output');
-        outBox.innerHTML = '<span style="color: var(--accent);">Generating Principal-level evaluation matrix...</span>';
+        outBox.innerHTML = '<span style="color: var(--accent);">Grading against rubric...</span>';
 
         let cleanComments = JSON.parse(JSON.stringify(commentsByFile));
         for (let file in cleanComments) {
@@ -387,9 +449,7 @@
                 body: JSON.stringify(cleanComments)
             });
             activeEvaluation = await res.json();
-
-            reRenderCanvas();
-
+            reRenderCanvas(); // This now automatically updates the badges in the sidebar too!
             const signalColor = getSignalColor(activeEvaluation.hireSignal);
 
             outBox.innerHTML = `
@@ -410,7 +470,7 @@
                 </div>
 
                 <div style="margin-top: 1rem; color: var(--accent); font-size: 0.9rem; line-height: 1.5;">
-                    👉 <strong>Check the files!</strong> Detailed evaluation of what you missed, what you got right, and what was superfluous has been added directly beneath the code lines in the active files.
+                    👉 <strong>Check the files!</strong> Detailed evaluation has been added directly beneath the code lines in the active files.
                 </div>
             `;
         } catch(e) {

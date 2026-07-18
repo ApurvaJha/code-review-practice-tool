@@ -18,8 +18,8 @@ JSON Blueprint:
       "content": "# System Overview\n\nThis PR introduces..."
     },
     {
-      "name": "ExampleFile.ext",
-      "content": "..."
+      "name": "example_filename_matching_the_requested_language",
+      "content": "raw code matching the requested language..."
     }
   ]
 }
