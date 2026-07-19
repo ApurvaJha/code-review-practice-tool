@@ -17,7 +17,6 @@ import java.util.*;
 @Service
 public class WorkspaceService {
 
-    // Move the workspace outside the IDE's reach into your OS User Home directory
     private final Path WORKSPACE_DIR = Paths.get(System.getProperty("user.home"), ".architectural-arena", "workspace");
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -46,7 +45,6 @@ public class WorkspaceService {
             sessionNode.put("language", language);
             sessionNode.put("level", level);
 
-            // Safely parse incoming JSON strings
             try { sessionNode.set("scenario", mapper.readTree(scenario)); }
             catch (Exception e) { sessionNode.set("scenario", mapper.createObjectNode()); }
 
@@ -59,7 +57,6 @@ public class WorkspaceService {
             Path filePath = WORKSPACE_DIR.resolve(id + ".json");
             mapper.writerWithDefaultPrettyPrinter().writeValue(filePath.toFile(), sessionNode);
 
-            System.out.println("💾 Successfully saved session to: " + filePath.toAbsolutePath());
         } catch (Exception e) {
             System.err.println("❌ Critical error saving session to disk: " + e.getMessage());
         }
@@ -67,13 +64,7 @@ public class WorkspaceService {
 
     public List<Map<String, Object>> listSessions() {
         File[] files = WORKSPACE_DIR.toFile().listFiles((d, name) -> name.endsWith(".json"));
-
-        if (files == null || files.length == 0) {
-            System.out.println("📂 No files found in: " + WORKSPACE_DIR.toAbsolutePath());
-            return Collections.emptyList();
-        }
-
-        System.out.println("📂 Found " + files.length + " session files in " + WORKSPACE_DIR.toAbsolutePath());
+        if (files == null || files.length == 0) return Collections.emptyList();
 
         List<Map<String, Object>> sessions = new ArrayList<>();
 
@@ -87,14 +78,41 @@ public class WorkspaceService {
                 summary.put("language", root.path("language").asText("Unknown"));
                 summary.put("level", root.path("level").asText("Unknown"));
 
+                // Extract Focus Areas for Analytics
+                List<String> focusAreas = new ArrayList<>();
+                JsonNode focusNode = root.path("scenario").path("focusAreas");
+                if (focusNode.isArray()) {
+                    for (JsonNode area : focusNode) {
+                        focusAreas.add(area.path("tag").asText());
+                    }
+                }
+                summary.put("focusAreas", focusAreas);
+
+                // Extract Scores and Flaw Counts for Analytics
                 JsonNode eval = root.path("evaluation");
+                int accurate = 0; int missed = 0; int superfluous = 0;
+
                 if (!eval.isMissingNode()) {
                     summary.put("score", eval.path("score").asInt(0));
                     summary.put("hireSignal", eval.path("hireSignal").asText("Pending"));
+
+                    JsonNode feedback = eval.path("inlineFeedback");
+                    if (feedback.isArray()) {
+                        for (JsonNode fb : feedback) {
+                            String type = fb.path("type").asText("").toLowerCase();
+                            if (type.equals("accurate")) accurate++;
+                            else if (type.equals("missed")) missed++;
+                            else if (type.equals("superfluous")) superfluous++;
+                        }
+                    }
                 } else {
                     summary.put("score", 0);
                     summary.put("hireSignal", "Pending");
                 }
+
+                summary.put("accurateCount", accurate);
+                summary.put("missedCount", missed);
+                summary.put("superfluousCount", superfluous);
 
                 sessions.add(summary);
             } catch (Exception e) {

@@ -89,7 +89,7 @@
         .btn:hover { opacity: 0.9; }
         .btn-secondary { background-color: #334155; color: white; margin-top: 0.5rem; }
         .btn-secondary:hover { background-color: #475569; }
-        .btn-outline { background-color: transparent; color: var(--accent); border: 1px solid var(--accent); width: auto; padding: 0.4rem 1rem; font-size: 0.85rem; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+        .btn-outline { background-color: transparent; color: var(--accent); border: 1px solid var(--accent); width: auto; padding: 0.4rem 1rem; font-size: 0.85rem; border-radius: 4px; cursor: pointer; transition: all 0.2s; text-decoration: none; }
         .btn-outline:hover { background-color: rgba(56, 189, 248, 0.1); }
         .btn-outline:disabled { border-color: var(--border-color); color: var(--text-muted); cursor: not-allowed; background-color: transparent; }
 
@@ -103,9 +103,6 @@
         /* Modals */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
         .modal-content { background: var(--bg-surface); padding: 2rem; border-radius: 8px; border: 1px solid var(--border-color); width: 80%; max-width: 700px; max-height: 80vh; display: flex; flex-direction: column; }
-        .history-list { overflow-y: auto; flex: 1; }
-        .history-item { padding: 1rem; border-bottom: 1px solid var(--border-color); cursor: pointer; display: flex; justify-content: space-between; transition: background-color 0.2s; }
-        .history-item:hover { background-color: rgba(56, 189, 248, 0.05); }
 
         /* Chat UI Specific */
         .chat-bubble { padding: 10px 14px; border-radius: 6px; margin-bottom: 10px; font-size: 0.9rem; line-height: 1.4; max-width: 85%; }
@@ -118,8 +115,11 @@
 <body>
 
 <header>
-    <h1>Architectural Assessment Engine</h1>
-    <button class="btn-outline" onclick="openHistory()">📁 Past Sessions</button>
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <h1>Architectural Assessment Engine</h1>
+        <a id="back-btn" href="/" class="btn-outline" style="display: none; border: none; padding: 0;">← Clear Session</a>
+    </div>
+    <button class="btn-outline" onclick="window.location.href='/history.html'">📊 Analytics Dashboard</button>
 </header>
 
 <div class="main-container">
@@ -167,7 +167,7 @@
                 <div class="selectable-tag" data-val="Code testability">Testability</div>
             </div>
 
-            <button class="btn btn-secondary" onclick="generateChallenge()">Generate Scenario</button>
+            <button class="btn btn-secondary" onclick="generateChallenge()" id="generate-btn">Generate Scenario</button>
         </div>
 
         <div class="sidebar-section">
@@ -207,17 +207,6 @@
     </div>
 </div>
 
-<!-- History Modal -->
-<div id="history-modal" class="modal-overlay">
-    <div class="modal-content">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
-            <h2 style="margin: 0; color: var(--accent); font-size: 1.2rem;">Workspace History</h2>
-            <button onclick="closeHistory()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
-        </div>
-        <div id="history-list" class="history-list"></div>
-    </div>
-</div>
-
 <!-- Interactive Chat Modal -->
 <div id="chat-modal" class="modal-overlay">
     <div class="modal-content" style="max-width: 600px; height: 75vh;">
@@ -241,6 +230,19 @@
 </div>
 
 <script>
+    // --- Initial Routing Logic ---
+    window.onload = () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session');
+        if (sessionId) {
+            document.getElementById('back-btn').style.display = 'block';
+            document.getElementById('generate-btn').disabled = true;
+            document.getElementById('generate-btn').style.opacity = '0.5';
+            document.getElementById('generate-btn').innerText = 'Viewing Past Session';
+            loadSession(sessionId);
+        }
+    };
+
     // --- Layout Logic ---
     const resizer = document.getElementById('resizer');
     const sidebar = document.getElementById('sidebar');
@@ -268,13 +270,14 @@
     let isDraggingCode = false;
     let dragStartLine = null;
     let dragCurrentLine = null;
-
-    // --- Chat State (Maintained per session) ---
-    // chatSessions shape: { "flawKey": { strikes: 0, history: [] } }
     let chatSessions = {};
     let currentChatFlawKey = null;
 
     async function generateChallenge() {
+        // Clear query params if any
+        if (window.location.search) { window.history.replaceState(null, null, window.location.pathname); }
+        document.getElementById('back-btn').style.display = 'none';
+
         const lang = document.getElementById('language-select').value;
         const lvl = document.getElementById('level-select').value;
         const selectedTopics = Array.from(document.querySelectorAll('.selectable-tag.selected'))
@@ -293,7 +296,7 @@
         activeFiles = [];
         commentsByFile = {};
         activeEvaluation = null;
-        chatSessions = {}; // Reset chat state on new generation
+        chatSessions = {};
         renderFileExplorer();
 
         try {
@@ -387,7 +390,6 @@
         return false;
     }
 
-    // Hash function to create unique IDs for missed comments
     function generateFlawKey(file, line, comment) {
         return `${file}_${line}_${comment.substring(0, 15).replace(/[^a-zA-Z0-9]/g, '')}`;
     }
@@ -466,10 +468,8 @@
                     const tag = document.createElement('span'); tag.className = `ai-tag tag-${typeClass}`; tag.innerText = f.type;
                     tagCol.appendChild(tag);
 
-                    // --- Chat Button Injection for MISSED Flaws ---
                     if (typeClass === 'missed') {
                         const flawKey = generateFlawKey(currentFileName, f.line, f.comment);
-                        // Initialize state if not exists
                         if (!chatSessions[flawKey]) chatSessions[flawKey] = { strikes: 0, history: [], commentText: f.comment };
 
                         const strikes = chatSessions[flawKey].strikes;
@@ -597,7 +597,6 @@
         refreshChatMessages();
         updateStrikeUI(session.strikes);
 
-        // Add listener for enter key
         document.getElementById('chat-input-field').onkeydown = (e) => {
             if(e.key === 'Enter') sendChatMessage();
         };
@@ -619,7 +618,7 @@
             banner.style.display = 'block';
             inputField.disabled = true;
             sendBtn.disabled = true;
-            reRenderCanvas(); // To update the button state on the main screen to "Locked Out"
+            reRenderCanvas();
         } else if (strikes > 0) {
             banner.innerText = `⚠️ Strike ${strikes}/3: Please keep questions related strictly to the code review context.`;
             banner.style.display = 'block';
@@ -658,14 +657,12 @@
         if (!text || !currentChatFlawKey) return;
 
         const session = chatSessions[currentChatFlawKey];
-        if (session.strikes >= 3) return; // Prevent hard sends
+        if (session.strikes >= 3) return;
 
-        // Push user message
         session.history.push({ role: 'user', text: text });
         inputField.value = '';
         refreshChatMessages();
 
-        // Show loading bubble
         const container = document.getElementById('chat-messages');
         const loadingDiv = document.createElement('div');
         loadingDiv.className = 'chat-bubble chat-ai';
@@ -673,7 +670,6 @@
         container.appendChild(loadingDiv);
         container.scrollTop = container.scrollHeight;
 
-        // Build payload
         const historyString = session.history.map(m => `${m.role.toUpperCase()}: ${m.text}`).join('\n');
         const payload = {
             scenario: activeScenarioRaw,
@@ -690,13 +686,9 @@
             });
             const data = await res.json();
 
-            // Remove loading
             container.removeChild(loadingDiv);
-
-            // Push AI response
             session.history.push({ role: 'ai', text: data.response });
 
-            // Handle strikes
             if (data.isOffTopic) {
                 session.strikes += 1;
             }
@@ -711,50 +703,9 @@
         }
     }
 
-    // --- History Modal Logic ---
-    async function openHistory() {
-        document.getElementById('history-modal').style.display = 'flex';
-        const list = document.getElementById('history-list');
-        list.innerHTML = '<p style="color: var(--text-muted); text-align: center; margin-top: 2rem;">Loading sessions...</p>';
-
-        try {
-            const res = await fetch('/api/sessions');
-            const sessions = await res.json();
-            list.innerHTML = '';
-
-            if (sessions.length === 0) {
-                list.innerHTML = '<p style="color:var(--text-muted); text-align: center;">No past sessions found in workspace.</p>';
-                return;
-            }
-
-            sessions.forEach(s => {
-                const item = document.createElement('div');
-                item.className = 'history-item';
-                item.onclick = () => loadSession(s.id);
-                const signalColor = getSignalColor(s.hireSignal);
-                item.innerHTML = `
-                    <div>
-                        <div style="font-weight:bold; color:var(--text-main); font-size: 1.1rem; margin-bottom: 4px;">${s.level} - ${s.language}</div>
-                        <div style="font-size:0.85rem; color:var(--text-muted);">${s.timestamp}</div>
-                    </div>
-                    <div style="text-align:right;">
-                        <div style="font-weight:bold; color:${signalColor}; font-size: 1.1rem; margin-bottom: 4px;">${s.hireSignal || 'N/A'}</div>
-                        <div style="font-size:0.85rem; color:var(--text-muted);">Score: ${s.score || 0}</div>
-                    </div>
-                `;
-                list.appendChild(item);
-            });
-        } catch (e) {
-            list.innerHTML = '<p style="color: #ef4444; text-align: center;">Failed to load history.</p>';
-        }
-    }
-
-    function closeHistory() { document.getElementById('history-modal').style.display = 'none'; }
-
+    // --- Hydration for Historical view via URL routing ---
     async function loadSession(id) {
-        closeHistory();
         document.getElementById('description-box').innerText = "Loading past session...";
-
         try {
             const res = await fetch(`/api/sessions/${id}`);
             const data = await res.json();
@@ -764,8 +715,6 @@
             commentsByFile = data.comments;
             activeFiles = data.scenario.files || [];
 
-            // Note: In a fully persistent app, we would also serialize and load chatSessions here.
-            // For now, loading a history view starts with fresh follow-up states.
             chatSessions = {};
 
             document.getElementById('description-box').innerText = data.scenario.description;
