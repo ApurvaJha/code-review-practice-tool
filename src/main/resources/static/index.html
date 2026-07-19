@@ -7,6 +7,7 @@
         :root {
             --bg-main: #0f172a; --bg-surface: #1e293b; --border-color: #334155;
             --text-main: #f8fafc; --text-muted: #94a3b8; --accent: #38bdf8; --code-bg: #0b0f19;
+            --danger: #ef4444;
         }
         body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-main); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; }
         body.is-resizing { cursor: col-resize !important; user-select: none !important; }
@@ -47,7 +48,6 @@
         .topics-header.open .icon { transform: rotate(90deg); }
 
         .focus-areas { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
-
         .focus-tag { position: relative; background-color: #334155; color: var(--text-main); font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; cursor: help; display: flex; align-items: center; gap: 4px; border: 1px solid #475569; }
         .focus-tag:hover { background-color: #475569; border-color: var(--accent); color: white; }
         .focus-tag::before { content: "🎯"; font-size: 0.7rem; }
@@ -85,34 +85,41 @@
         .tag-missed { background: #ef4444; color: #0f172a; }
         .tag-superfluous { background: #eab308; color: #0f172a; }
 
-        .btn { background-color: var(--accent); color: #0f172a; border: none; padding: 0.6rem 1.2rem; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%; }
+        .btn { background-color: var(--accent); color: #0f172a; border: none; padding: 0.6rem 1.2rem; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%; transition: opacity 0.2s; }
         .btn:hover { opacity: 0.9; }
         .btn-secondary { background-color: #334155; color: white; margin-top: 0.5rem; }
         .btn-secondary:hover { background-color: #475569; }
-        .btn-outline { background-color: transparent; color: var(--accent); border: 1px solid var(--accent); width: auto; padding: 0.4rem 1rem; font-size: 0.85rem;}
+        .btn-outline { background-color: transparent; color: var(--accent); border: 1px solid var(--accent); width: auto; padding: 0.4rem 1rem; font-size: 0.85rem; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
         .btn-outline:hover { background-color: rgba(56, 189, 248, 0.1); }
+        .btn-outline:disabled { border-color: var(--border-color); color: var(--text-muted); cursor: not-allowed; background-color: transparent; }
 
         .eval-section { margin-top: 1rem; background: #1e293b; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color); }
         .eval-title { font-weight: bold; margin-bottom: 0.5rem; color: var(--accent); }
-        ul { margin: 0; padding-left: 1.2rem; color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; }
         .scorecard { display: flex; gap: 1rem; margin-bottom: 1rem; }
         .score-box { flex: 1; padding: 1rem; background: #0f172a; border-radius: 6px; text-align: center; border: 1px solid var(--border-color); }
         .score-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.25rem; font-weight: bold; }
         .score-value { font-size: 1.5rem; font-weight: bold; }
 
-        /* Modal Styles */
-        #history-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
+        /* Modals */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
         .modal-content { background: var(--bg-surface); padding: 2rem; border-radius: 8px; border: 1px solid var(--border-color); width: 80%; max-width: 700px; max-height: 80vh; display: flex; flex-direction: column; }
         .history-list { overflow-y: auto; flex: 1; }
         .history-item { padding: 1rem; border-bottom: 1px solid var(--border-color); cursor: pointer; display: flex; justify-content: space-between; transition: background-color 0.2s; }
         .history-item:hover { background-color: rgba(56, 189, 248, 0.05); }
+
+        /* Chat UI Specific */
+        .chat-bubble { padding: 10px 14px; border-radius: 6px; margin-bottom: 10px; font-size: 0.9rem; line-height: 1.4; max-width: 85%; }
+        .chat-user { background-color: #334155; color: white; align-self: flex-end; border-bottom-right-radius: 0; }
+        .chat-ai { background-color: rgba(56, 189, 248, 0.1); color: var(--text-main); border: 1px solid rgba(56, 189, 248, 0.2); align-self: flex-start; border-bottom-left-radius: 0; }
+        .chat-container { flex: 1; overflow-y: auto; padding-right: 10px; display: flex; flex-direction: column; margin-bottom: 1rem; }
+        .strike-warning { color: var(--danger); font-size: 0.8rem; font-weight: bold; margin-bottom: 0.5rem; text-align: right; }
     </style>
 </head>
 <body>
 
 <header>
     <h1>Architectural Assessment Engine</h1>
-    <button class="btn btn-outline" onclick="openHistory()">📁 Past Sessions</button>
+    <button class="btn-outline" onclick="openHistory()">📁 Past Sessions</button>
 </header>
 
 <div class="main-container">
@@ -146,6 +153,7 @@
                 Select custom focus areas (leave blank for random):
             </div>
             <div class="topic-selector" id="user-topics">
+                <div class="selectable-tag" data-val="Algorithmic and Data Structure flaws">Algorithms & DSA</div>
                 <div class="selectable-tag" data-val="Bugs and logical errors">Bugs & Logic</div>
                 <div class="selectable-tag" data-val="Performance problems">Performance</div>
                 <div class="selectable-tag" data-val="Security issues">Security</div>
@@ -200,45 +208,58 @@
 </div>
 
 <!-- History Modal -->
-<div id="history-modal">
+<div id="history-modal" class="modal-overlay">
     <div class="modal-content">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
             <h2 style="margin: 0; color: var(--accent); font-size: 1.2rem;">Workspace History</h2>
             <button onclick="closeHistory()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
         </div>
-        <div id="history-list" class="history-list">
-            <!-- Dynamically populated -->
+        <div id="history-list" class="history-list"></div>
+    </div>
+</div>
+
+<!-- Interactive Chat Modal -->
+<div id="chat-modal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 600px; height: 75vh;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+            <h2 style="margin: 0; color: var(--accent); font-size: 1.2rem;">Mentor Follow-up</h2>
+            <button onclick="closeChat()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+
+        <div style="background: #0f172a; padding: 10px; border-radius: 4px; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem; border: 1px solid var(--border-color);">
+            <strong>Flaw Context:</strong> <span id="chat-flaw-preview"></span>
+        </div>
+
+        <div id="strike-banner" class="strike-warning" style="display:none;"></div>
+        <div id="chat-messages" class="chat-container"></div>
+
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="chat-input-field" class="dropdown" style="margin: 0; flex: 1;" placeholder="Ask about this flaw...">
+            <button id="chat-send-btn" class="btn" style="width: auto; padding: 0.5rem 1rem;" onclick="sendChatMessage()">Send</button>
         </div>
     </div>
 </div>
 
 <script>
-    // Resizer Logic
+    // --- Layout Logic ---
     const resizer = document.getElementById('resizer');
     const sidebar = document.getElementById('sidebar');
     let isResizingSidebar = false;
-
     resizer.addEventListener('mousedown', () => { isResizingSidebar = true; document.body.classList.add('is-resizing'); });
     window.addEventListener('mousemove', (e) => { if (isResizingSidebar) sidebar.style.width = `${Math.max(250, Math.min(e.clientX, 800))}px`; });
     window.addEventListener('mouseup', () => { if (isResizingSidebar) { isResizingSidebar = false; document.body.classList.remove('is-resizing'); }});
 
-    // Tag Selection Logic
-    document.querySelectorAll('.selectable-tag').forEach(tag => {
-        tag.onclick = () => tag.classList.toggle('selected');
-    });
+    document.querySelectorAll('.selectable-tag').forEach(tag => { tag.onclick = () => tag.classList.toggle('selected'); });
 
     function toggleTopics() {
         const container = document.getElementById('focus-areas-container');
         const header = document.querySelector('.topics-header');
-        if (container.style.display === 'none') {
-            container.style.display = 'flex';
-            header.classList.add('open');
-        } else {
-            container.style.display = 'none';
-            header.classList.remove('open');
-        }
+        if (container.style.display === 'none') { container.style.display = 'flex'; header.classList.add('open'); }
+        else { container.style.display = 'none'; header.classList.remove('open'); }
     }
 
+    // --- Core State ---
+    let activeScenarioRaw = null;
     let activeFiles = [];
     let currentFileName = null;
     let currentCodeText = "";
@@ -247,6 +268,11 @@
     let isDraggingCode = false;
     let dragStartLine = null;
     let dragCurrentLine = null;
+
+    // --- Chat State (Maintained per session) ---
+    // chatSessions shape: { "flawKey": { strikes: 0, history: [] } }
+    let chatSessions = {};
+    let currentChatFlawKey = null;
 
     async function generateChallenge() {
         const lang = document.getElementById('language-select').value;
@@ -267,11 +293,13 @@
         activeFiles = [];
         commentsByFile = {};
         activeEvaluation = null;
+        chatSessions = {}; // Reset chat state on new generation
         renderFileExplorer();
 
         try {
             const response = await fetch(`/api/generate?language=${encodeURIComponent(lang)}&level=${encodeURIComponent(lvl)}&topics=${encodeURIComponent(selectedTopics)}`);
-            const data = await response.json();
+            activeScenarioRaw = await response.text();
+            const data = JSON.parse(activeScenarioRaw);
 
             document.getElementById('description-box').innerText = data.description;
 
@@ -295,7 +323,7 @@
             renderFileExplorer();
 
             if (activeFiles.length > 0) switchFile(activeFiles[0].name);
-            document.getElementById('analyze-btn').style.display = 'block'; // Show button when ready
+            document.getElementById('analyze-btn').style.display = 'block';
         } catch (e) {
             document.getElementById('description-box').innerText = "Failed loading scenario. Ensure backend is running.";
         }
@@ -359,6 +387,11 @@
         return false;
     }
 
+    // Hash function to create unique IDs for missed comments
+    function generateFlawKey(file, line, comment) {
+        return `${file}_${line}_${comment.substring(0, 15).replace(/[^a-zA-Z0-9]/g, '')}`;
+    }
+
     function reRenderCanvas() {
         const canvas = document.getElementById('code-canvas');
         canvas.innerHTML = '';
@@ -380,7 +413,6 @@
 
             if (isLineInSavedRange(lineNum)) row.classList.add('highlighted');
 
-            // Disable interactions if we are viewing a historical evaluated state
             if (!activeEvaluation) {
                 row.onmousedown = (e) => {
                     if (e.target.closest('.comment-area') || e.target.closest('.ai-feedback')) return;
@@ -400,7 +432,6 @@
                 const inputField = document.createElement('input');
                 inputField.value = r.text;
 
-                // If historical session, make inputs read-only
                 if (activeEvaluation) {
                     inputField.readOnly = true;
                     inputField.style.opacity = '0.7';
@@ -412,7 +443,6 @@
                 }
 
                 commentWrapper.appendChild(inputField);
-
                 if (!activeEvaluation) {
                     const delBtn = document.createElement('button');
                     delBtn.innerText = '🗑️'; delBtn.className = 'del-btn';
@@ -429,12 +459,43 @@
                 matchingFeedbacks.forEach(f => {
                     const typeClass = (f.type || 'Missed').toLowerCase();
                     const aiWrapper = document.createElement('div'); aiWrapper.className = `ai-feedback ai-${typeClass}`;
+
+                    const tagCol = document.createElement('div');
+                    tagCol.style.display = 'flex'; tagCol.style.flexDirection = 'column'; tagCol.style.gap = '8px';
+
                     const tag = document.createElement('span'); tag.className = `ai-tag tag-${typeClass}`; tag.innerText = f.type;
+                    tagCol.appendChild(tag);
+
+                    // --- Chat Button Injection for MISSED Flaws ---
+                    if (typeClass === 'missed') {
+                        const flawKey = generateFlawKey(currentFileName, f.line, f.comment);
+                        // Initialize state if not exists
+                        if (!chatSessions[flawKey]) chatSessions[flawKey] = { strikes: 0, history: [], commentText: f.comment };
+
+                        const strikes = chatSessions[flawKey].strikes;
+
+                        const chatBtn = document.createElement('button');
+                        chatBtn.className = 'btn-outline';
+                        chatBtn.style.fontSize = '0.65rem';
+                        chatBtn.style.padding = '4px';
+
+                        if (strikes >= 3) {
+                            chatBtn.innerText = 'Locked Out';
+                            chatBtn.disabled = true;
+                            chatBtn.title = 'You have exceeded the off-topic warning limit for this flaw.';
+                        } else {
+                            chatBtn.innerText = 'Ask Follow-up';
+                            chatBtn.onclick = () => openChat(flawKey, f.comment);
+                        }
+                        tagCol.appendChild(chatBtn);
+                    }
+
                     const textContent = document.createElement('div');
                     const refLine = document.createElement('div'); refLine.style.fontSize = "0.75rem"; refLine.style.color = "var(--text-muted)"; refLine.style.marginBottom = "4px"; refLine.innerText = `Line(s): ${f.line}`;
                     const message = document.createElement('div'); message.innerText = f.comment;
                     textContent.appendChild(refLine); textContent.appendChild(message);
-                    aiWrapper.appendChild(tag); aiWrapper.appendChild(textContent); canvas.appendChild(aiWrapper);
+
+                    aiWrapper.appendChild(tagCol); aiWrapper.appendChild(textContent); canvas.appendChild(aiWrapper);
                 });
             }
         });
@@ -494,7 +555,7 @@
                 body: JSON.stringify(cleanComments)
             });
             activeEvaluation = await res.json();
-            document.getElementById('analyze-btn').style.display = 'none'; // Lock submission
+            document.getElementById('analyze-btn').style.display = 'none';
             reRenderCanvas();
             renderScorecard(activeEvaluation, false);
         } catch(e) {
@@ -525,8 +586,132 @@
         `;
     }
 
-    // --- History Modal Logic ---
+    // --- Chat Modal Logic ---
+    function openChat(flawKey, flawComment) {
+        currentChatFlawKey = flawKey;
+        const session = chatSessions[flawKey];
 
+        document.getElementById('chat-flaw-preview').innerText = flawComment;
+        document.getElementById('chat-modal').style.display = 'flex';
+
+        refreshChatMessages();
+        updateStrikeUI(session.strikes);
+
+        // Add listener for enter key
+        document.getElementById('chat-input-field').onkeydown = (e) => {
+            if(e.key === 'Enter') sendChatMessage();
+        };
+        setTimeout(() => document.getElementById('chat-input-field').focus(), 100);
+    }
+
+    function closeChat() {
+        document.getElementById('chat-modal').style.display = 'none';
+        currentChatFlawKey = null;
+    }
+
+    function updateStrikeUI(strikes) {
+        const inputField = document.getElementById('chat-input-field');
+        const sendBtn = document.getElementById('chat-send-btn');
+        const banner = document.getElementById('strike-banner');
+
+        if (strikes >= 3) {
+            banner.innerText = "🛑 Follow-ups disabled due to repeated off-topic queries.";
+            banner.style.display = 'block';
+            inputField.disabled = true;
+            sendBtn.disabled = true;
+            reRenderCanvas(); // To update the button state on the main screen to "Locked Out"
+        } else if (strikes > 0) {
+            banner.innerText = `⚠️ Strike ${strikes}/3: Please keep questions related strictly to the code review context.`;
+            banner.style.display = 'block';
+            inputField.disabled = false;
+            sendBtn.disabled = false;
+        } else {
+            banner.style.display = 'none';
+            inputField.disabled = false;
+            sendBtn.disabled = false;
+        }
+    }
+
+    function refreshChatMessages() {
+        const container = document.getElementById('chat-messages');
+        container.innerHTML = '';
+
+        const history = chatSessions[currentChatFlawKey].history;
+        if (history.length === 0) {
+            container.innerHTML = '<div style="color:var(--text-muted); text-align:center; margin-top:2rem; font-size: 0.9rem;">Ask a question to begin.</div>';
+            return;
+        }
+
+        history.forEach(msg => {
+            const div = document.createElement('div');
+            div.className = `chat-bubble ${msg.role === 'user' ? 'chat-user' : 'chat-ai'}`;
+            div.innerText = msg.text;
+            container.appendChild(div);
+        });
+
+        container.scrollTop = container.scrollHeight;
+    }
+
+    async function sendChatMessage() {
+        const inputField = document.getElementById('chat-input-field');
+        const text = inputField.value.trim();
+        if (!text || !currentChatFlawKey) return;
+
+        const session = chatSessions[currentChatFlawKey];
+        if (session.strikes >= 3) return; // Prevent hard sends
+
+        // Push user message
+        session.history.push({ role: 'user', text: text });
+        inputField.value = '';
+        refreshChatMessages();
+
+        // Show loading bubble
+        const container = document.getElementById('chat-messages');
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'chat-bubble chat-ai';
+        loadingDiv.innerText = 'Thinking...';
+        container.appendChild(loadingDiv);
+        container.scrollTop = container.scrollHeight;
+
+        // Build payload
+        const historyString = session.history.map(m => `${m.role.toUpperCase()}: ${m.text}`).join('\n');
+        const payload = {
+            scenario: activeScenarioRaw,
+            missedComment: session.commentText,
+            query: text,
+            history: historyString
+        };
+
+        try {
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            // Remove loading
+            container.removeChild(loadingDiv);
+
+            // Push AI response
+            session.history.push({ role: 'ai', text: data.response });
+
+            // Handle strikes
+            if (data.isOffTopic) {
+                session.strikes += 1;
+            }
+
+            updateStrikeUI(session.strikes);
+            refreshChatMessages();
+
+        } catch (e) {
+            container.removeChild(loadingDiv);
+            session.history.push({ role: 'ai', text: 'Error connecting to mentor AI.' });
+            refreshChatMessages();
+        }
+    }
+
+    // --- History Modal Logic ---
     async function openHistory() {
         document.getElementById('history-modal').style.display = 'flex';
         const list = document.getElementById('history-list');
@@ -546,20 +731,14 @@
                 const item = document.createElement('div');
                 item.className = 'history-item';
                 item.onclick = () => loadSession(s.id);
-
                 const signalColor = getSignalColor(s.hireSignal);
-
                 item.innerHTML = `
                     <div>
-                        <div style="font-weight:bold; color:var(--text-main); font-size: 1.1rem; margin-bottom: 4px;">
-                            ${s.level} - ${s.language}
-                        </div>
+                        <div style="font-weight:bold; color:var(--text-main); font-size: 1.1rem; margin-bottom: 4px;">${s.level} - ${s.language}</div>
                         <div style="font-size:0.85rem; color:var(--text-muted);">${s.timestamp}</div>
                     </div>
                     <div style="text-align:right;">
-                        <div style="font-weight:bold; color:${signalColor}; font-size: 1.1rem; margin-bottom: 4px;">
-                            ${s.hireSignal || 'N/A'}
-                        </div>
+                        <div style="font-weight:bold; color:${signalColor}; font-size: 1.1rem; margin-bottom: 4px;">${s.hireSignal || 'N/A'}</div>
                         <div style="font-size:0.85rem; color:var(--text-muted);">Score: ${s.score || 0}</div>
                     </div>
                 `;
@@ -570,9 +749,7 @@
         }
     }
 
-    function closeHistory() {
-        document.getElementById('history-modal').style.display = 'none';
-    }
+    function closeHistory() { document.getElementById('history-modal').style.display = 'none'; }
 
     async function loadSession(id) {
         closeHistory();
@@ -582,20 +759,22 @@
             const res = await fetch(`/api/sessions/${id}`);
             const data = await res.json();
 
-            // Rehydrate the entire state
-            const scenario = data.scenario;
+            activeScenarioRaw = JSON.stringify(data.scenario);
             activeEvaluation = data.evaluation;
             commentsByFile = data.comments;
-            activeFiles = scenario.files || [];
+            activeFiles = data.scenario.files || [];
 
-            document.getElementById('description-box').innerText = scenario.description;
+            // Note: In a fully persistent app, we would also serialize and load chatSessions here.
+            // For now, loading a history view starts with fresh follow-up states.
+            chatSessions = {};
 
-            // Re-render tags
+            document.getElementById('description-box').innerText = data.scenario.description;
+
             const focusContainer = document.getElementById('focus-areas-container');
             focusContainer.innerHTML = '';
-            if (scenario.focusAreas && Array.isArray(scenario.focusAreas) && scenario.focusAreas.length > 0) {
+            if (data.scenario.focusAreas && Array.isArray(data.scenario.focusAreas) && data.scenario.focusAreas.length > 0) {
                 document.getElementById('topics-section').style.display = 'block';
-                scenario.focusAreas.forEach(area => {
+                data.scenario.focusAreas.forEach(area => {
                     const tagContainer = document.createElement('div');
                     tagContainer.className = 'focus-tag';
                     tagContainer.appendChild(document.createTextNode(area.tag));
@@ -612,10 +791,7 @@
             renderScorecard(activeEvaluation, true);
             renderFileExplorer();
             if (activeFiles.length > 0) switchFile(activeFiles[0].name);
-
-            // Hide the analyze button because this session is already graded
             document.getElementById('analyze-btn').style.display = 'none';
-
         } catch (e) {
             document.getElementById('description-box').innerText = "Failed to load session data.";
         }

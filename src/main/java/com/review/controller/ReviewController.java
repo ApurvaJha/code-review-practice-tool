@@ -46,6 +46,17 @@ public class ReviewController {
         return evaluation;
     }
 
+    @PostMapping(value = "/chat", consumes = "application/json", produces = "application/json")
+    public String processChat(@RequestBody Map<String, String> payload) throws Exception {
+        // If scenario is empty in payload, fallback to the controller's active state
+        String scenario = payload.getOrDefault("scenario", activeCodeState);
+        String missedComment = payload.getOrDefault("missedComment", "");
+        String query = payload.getOrDefault("query", "");
+        String history = payload.getOrDefault("history", "");
+
+        return geminiService.chatAboutFlaw(scenario, missedComment, query, history);
+    }
+
     @GetMapping(value = "/sessions", produces = "application/json")
     public List<Map<String, Object>> getSessions() {
         return workspaceService.listSessions();

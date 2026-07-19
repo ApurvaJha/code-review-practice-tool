@@ -14,6 +14,7 @@ You MUST strictly focus on the following areas: %3$s. Do NOT select any other ar
 Ensure the 3-5 critical flaws in the code are strictly derived from these focus areas.
 
 Here is the reference list of possible focus areas and what they comprise of:
+- Algorithmic and Data Structure flaws: Issue in the algorithm, Suboptimal time/space complexity, incorrect algorithm selection (e.g., using O(N^2) sorting instead of O(N log N)), flawed dynamic programming state transitions, incorrect graph traversals, or missing memoization.
 - Bugs and logical errors: Edge case handling, off-by-one errors, state mismanagement, incorrect business logic implementation, and improper data validation before processing.
 - Performance problems: Algorithmic complexity, N+1 database queries, missing or ineffective caching strategies, inefficient data serialization, and heavy processing on the main thread.
 - Security issues: SQL/NoSQL injection vulnerabilities, insecure direct object references (IDOR), hardcoded secrets or credentials, inadequate access control, and cross-site scripting (XSS).

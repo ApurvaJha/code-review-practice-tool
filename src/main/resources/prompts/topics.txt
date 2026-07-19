@@ -9,3 +9,4 @@ Resilience and fault-tolerance
 Resource management
 Error handling strategy
 Code testability
+Algorithmic and Data Structure flaws

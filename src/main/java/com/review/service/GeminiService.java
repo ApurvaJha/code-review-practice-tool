@@ -28,7 +28,9 @@ public class GeminiService {
     @Value("classpath:prompts/topics.txt")
     private Resource topicsResource;
 
-    // FIX 1: Added <String> here
+    @Value("classpath:prompts/chat-prompt.txt")
+    private Resource chatPromptResource;
+
     private List<String> allTopicsCache = null;
 
     public GeminiService(@Value("${gemini.api-key}") String apiKey,
@@ -41,7 +43,6 @@ public class GeminiService {
         return new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
     }
 
-    // FIX 2: Added <String> here
     private List<String> getAvailableTopics() throws Exception {
         if (allTopicsCache == null) {
             String rawTopics = readResource(topicsResource);
@@ -55,21 +56,17 @@ public class GeminiService {
 
     public String generateProblem(String language, String level, String topics) throws Exception {
         String promptTemplate = readResource(generatePromptResource);
-
         String finalTopics = topics;
 
         if (finalTopics == null || finalTopics.trim().isEmpty()) {
-            // FIX 3: Added <String> here
             List<String> mutableTopics = getAvailableTopics();
             Collections.shuffle(mutableTopics);
-
             finalTopics = mutableTopics.stream()
                     .limit(3)
                     .collect(Collectors.joining(", "));
         }
 
         String prompt = String.format(promptTemplate, level, language, finalTopics);
-
         GenerateContentResponse response = client.models.generateContent(model, prompt, null);
         return cleanRawResponse(response.text());
     }
@@ -77,7 +74,13 @@ public class GeminiService {
     public String evaluateReview(String language, String level, String targetCode, String candidateCommentsJson) throws Exception {
         String promptTemplate = readResource(evaluatePromptResource);
         String prompt = String.format(promptTemplate, level, language, targetCode, candidateCommentsJson);
+        GenerateContentResponse response = client.models.generateContent(model, prompt, null);
+        return cleanRawResponse(response.text());
+    }
 
+    public String chatAboutFlaw(String scenario, String missedComment, String query, String history) throws Exception {
+        String promptTemplate = readResource(chatPromptResource);
+        String prompt = String.format(promptTemplate, scenario, missedComment, history, query);
         GenerateContentResponse response = client.models.generateContent(model, prompt, null);
         return cleanRawResponse(response.text());
     }
