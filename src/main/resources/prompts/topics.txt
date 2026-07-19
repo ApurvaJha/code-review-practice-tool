@@ -1,0 +1,11 @@
+Bugs and logical errors
+Performance problems
+Security issues
+Missing abstractions
+Refactoring to code needs
+Concurrency and synchronization
+Backward compatibility
+Resilience and fault-tolerance
+Resource management
+Error handling strategy
+Code testability

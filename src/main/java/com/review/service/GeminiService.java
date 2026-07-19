@@ -5,7 +5,13 @@ import com.google.genai.types.GenerateContentResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class GeminiService {
@@ -19,6 +25,12 @@ public class GeminiService {
     @Value("classpath:prompts/evaluate-prompt.txt")
     private Resource evaluatePromptResource;
 
+    @Value("classpath:prompts/topics.txt")
+    private Resource topicsResource;
+
+    // FIX 1: Added <String> here
+    private List<String> allTopicsCache = null;
+
     public GeminiService(@Value("${gemini.api-key}") String apiKey,
                          @Value("${gemini.model:gemini-2.0-flash-lite}") String model) {
         this.client = Client.builder().apiKey(apiKey).build();
@@ -29,18 +41,34 @@ public class GeminiService {
         return new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
     }
 
+    // FIX 2: Added <String> here
+    private List<String> getAvailableTopics() throws Exception {
+        if (allTopicsCache == null) {
+            String rawTopics = readResource(topicsResource);
+            allTopicsCache = Arrays.stream(rawTopics.split("\\r?\\n"))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toList());
+        }
+        return new ArrayList<>(allTopicsCache);
+    }
+
     public String generateProblem(String language, String level, String topics) throws Exception {
         String promptTemplate = readResource(generatePromptResource);
 
-        String topicsInstruction;
-        if (topics == null || topics.trim().isEmpty()) {
-            topicsInstruction = "Select exactly 2 to 3 Focus Areas randomly from the list below.";
-        } else {
-            topicsInstruction = "You MUST strictly focus on the following user-selected areas: " + topics + ". Do NOT select any other areas outside of these.";
+        String finalTopics = topics;
+
+        if (finalTopics == null || finalTopics.trim().isEmpty()) {
+            // FIX 3: Added <String> here
+            List<String> mutableTopics = getAvailableTopics();
+            Collections.shuffle(mutableTopics);
+
+            finalTopics = mutableTopics.stream()
+                    .limit(3)
+                    .collect(Collectors.joining(", "));
         }
 
-        // Inject level (%1$s), language (%2$s), and the dynamic topics instruction (%3$s)
-        String prompt = String.format(promptTemplate, level, language, topicsInstruction);
+        String prompt = String.format(promptTemplate, level, language, finalTopics);
 
         GenerateContentResponse response = client.models.generateContent(model, prompt, null);
         return cleanRawResponse(response.text());
