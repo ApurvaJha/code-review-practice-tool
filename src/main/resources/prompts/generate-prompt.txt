@@ -9,12 +9,19 @@ Do NOT reveal, hint at, or spoil any of the intentional bugs in the README. Writ
 CRITICAL INSTRUCTION FOR CODE COMMENTS (NO SPOILERS):
 You MUST NOT include any code comments that point out, hint at, or explain the intentional flaws (e.g., absolutely no "// FLAW:" or "// Bug:" comments). The generated code must look like a genuine submission from an engineer who believes their code is perfectly fine and production-ready. The flaws must be completely silent and hidden in the structure, logic, and architecture.
 
+DIFFICULTY CATEGORIZATION:
+You must explicitly categorize the challenge as "Easy", "Medium", or "Hard" based on the following factors:
+1. Size of the PR (lines of code, number of files).
+2. Ease of understanding the PR context, README, and what each component does.
+3. Number of issues in the PR (e.g., fewer for Easy, more for Hard).
+4. Type of issues (e.g., easily identifiable logic bugs vs. deeply hidden, subtle concurrency/architectural flaws).
+
 FOCUS AREAS INSTRUCTION:
 You MUST strictly focus on the following areas: %3$s. Do NOT select any other areas outside of these.
 Ensure the 3-5 critical flaws in the code are strictly derived from these focus areas.
 
 Here is the reference list of possible focus areas and what they comprise of:
-- Algorithmic and Data Structure flaws: Issue in the algorithm, Suboptimal time/space complexity, incorrect algorithm selection (e.g., using O(N^2) sorting instead of O(N log N)), flawed dynamic programming state transitions, incorrect graph traversals, or missing memoization.
+- Algorithmic and Data Structure flaws: Suboptimal time/space complexity, incorrect algorithm selection, flawed dynamic programming state transitions, incorrect graph traversals, or missing memoization.
 - Bugs and logical errors: Edge case handling, off-by-one errors, state mismanagement, incorrect business logic implementation, and improper data validation before processing.
 - Performance problems: Algorithmic complexity, N+1 database queries, missing or ineffective caching strategies, inefficient data serialization, and heavy processing on the main thread.
 - Security issues: SQL/NoSQL injection vulnerabilities, insecure direct object references (IDOR), hardcoded secrets or credentials, inadequate access control, and cross-site scripting (XSS).
@@ -30,6 +37,7 @@ Here is the reference list of possible focus areas and what they comprise of:
 Return ONLY a raw JSON object. Do not wrap it in markdown.
 JSON Blueprint:
 {
+  "difficulty": "Easy",
   "description": "System architecture context, SLAs, scale requirements, and constraints.",
   "focusAreas": [
     {

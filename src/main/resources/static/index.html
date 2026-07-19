@@ -7,7 +7,7 @@
         :root {
             --bg-main: #0f172a; --bg-surface: #1e293b; --border-color: #334155;
             --text-main: #f8fafc; --text-muted: #94a3b8; --accent: #38bdf8; --code-bg: #0b0f19;
-            --danger: #ef4444;
+            --danger: #ef4444; --success: #22c55e; --warning: #eab308;
         }
         body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-main); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; }
         body.is-resizing { cursor: col-resize !important; user-select: none !important; }
@@ -41,6 +41,12 @@
         .badge-accurate { background: #22c55e; color: #0f172a; }
         .badge-missed { background: #ef4444; color: white; }
         .badge-superfluous { background: #eab308; color: #0f172a; }
+
+        /* Difficulty Badge Classes */
+        .diff-badge { font-size: 0.65rem; padding: 3px 8px; border-radius: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; }
+        .diff-easy { background: rgba(34, 197, 94, 0.1); color: var(--success); border: 1px solid var(--success); }
+        .diff-medium { background: rgba(234, 179, 8, 0.1); color: var(--warning); border: 1px solid var(--warning); }
+        .diff-hard { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); }
 
         .topics-header { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; color: var(--text-muted); font-size: 0.85rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; transition: color 0.2s; }
         .topics-header:hover { color: var(--text-main); }
@@ -171,7 +177,11 @@
         </div>
 
         <div class="sidebar-section">
-            <div class="sidebar-title">System Context</div>
+            <!-- This is where the Badge renders on the Main Arena -->
+            <div class="sidebar-title" style="display: flex; justify-content: space-between; align-items: center;">
+                System Context
+                <span id="difficulty-badge" class="diff-badge" style="display: none;"></span>
+            </div>
             <div id="description-box" style="font-size: 0.9rem; line-height: 1.5; color: var(--text-muted);">
                 Select your parameters, then click Generate Scenario to build the review environment.
             </div>
@@ -230,7 +240,6 @@
 </div>
 
 <script>
-    // --- Initial Routing Logic ---
     window.onload = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const sessionId = urlParams.get('session');
@@ -243,7 +252,6 @@
         }
     };
 
-    // --- Layout Logic ---
     const resizer = document.getElementById('resizer');
     const sidebar = document.getElementById('sidebar');
     let isResizingSidebar = false;
@@ -260,7 +268,6 @@
         else { container.style.display = 'none'; header.classList.remove('open'); }
     }
 
-    // --- Core State ---
     let activeScenarioRaw = null;
     let activeFiles = [];
     let currentFileName = null;
@@ -273,8 +280,18 @@
     let chatSessions = {};
     let currentChatFlawKey = null;
 
+    function renderDifficultyBadge(difficulty) {
+        const badge = document.getElementById('difficulty-badge');
+        if (!difficulty || difficulty === 'Unrated' || difficulty === '') {
+            badge.style.display = 'none';
+            return;
+        }
+        badge.innerText = difficulty;
+        badge.className = 'diff-badge diff-' + difficulty.toLowerCase();
+        badge.style.display = 'block';
+    }
+
     async function generateChallenge() {
-        // Clear query params if any
         if (window.location.search) { window.history.replaceState(null, null, window.location.pathname); }
         document.getElementById('back-btn').style.display = 'none';
 
@@ -284,6 +301,7 @@
             .map(t => t.getAttribute('data-val')).join(', ');
 
         document.getElementById('description-box').innerText = `Booting up ${lvl}-level ${lang} challenge...`;
+        document.getElementById('difficulty-badge').style.display = 'none';
         document.getElementById('topics-section').style.display = 'none';
         document.getElementById('focus-areas-container').innerHTML = '';
         document.getElementById('focus-areas-container').style.display = 'none';
@@ -305,6 +323,9 @@
             const data = JSON.parse(activeScenarioRaw);
 
             document.getElementById('description-box').innerText = data.description;
+
+            // This renders the badge immediately upon fresh generation
+            renderDifficultyBadge(data.difficulty);
 
             const focusContainer = document.getElementById('focus-areas-container');
             if (data.focusAreas && Array.isArray(data.focusAreas) && data.focusAreas.length > 0) {
@@ -586,7 +607,6 @@
         `;
     }
 
-    // --- Chat Modal Logic ---
     function openChat(flawKey, flawComment) {
         currentChatFlawKey = flawKey;
         const session = chatSessions[flawKey];
@@ -703,7 +723,6 @@
         }
     }
 
-    // --- Hydration for Historical view via URL routing ---
     async function loadSession(id) {
         document.getElementById('description-box').innerText = "Loading past session...";
         try {
@@ -718,6 +737,9 @@
             chatSessions = {};
 
             document.getElementById('description-box').innerText = data.scenario.description;
+
+            // Render the difficulty badge for historical sessions
+            renderDifficultyBadge(data.scenario.difficulty);
 
             const focusContainer = document.getElementById('focus-areas-container');
             focusContainer.innerHTML = '';

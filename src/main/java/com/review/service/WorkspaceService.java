@@ -78,9 +78,13 @@ public class WorkspaceService {
                 summary.put("language", root.path("language").asText("Unknown"));
                 summary.put("level", root.path("level").asText("Unknown"));
 
-                // Extract Focus Areas for Analytics
+                JsonNode scenarioNode = root.path("scenario");
+
+                // NEW: Extract difficulty (fails gracefully to empty string if missing in older files)
+                summary.put("difficulty", scenarioNode.path("difficulty").asText(""));
+
                 List<String> focusAreas = new ArrayList<>();
-                JsonNode focusNode = root.path("scenario").path("focusAreas");
+                JsonNode focusNode = scenarioNode.path("focusAreas");
                 if (focusNode.isArray()) {
                     for (JsonNode area : focusNode) {
                         focusAreas.add(area.path("tag").asText());
@@ -88,7 +92,6 @@ public class WorkspaceService {
                 }
                 summary.put("focusAreas", focusAreas);
 
-                // Extract Scores and Flaw Counts for Analytics
                 JsonNode eval = root.path("evaluation");
                 int accurate = 0; int missed = 0; int superfluous = 0;
 
@@ -120,7 +123,6 @@ public class WorkspaceService {
             }
         }
 
-        // Sort newest first
         sessions.sort((a, b) -> ((String)b.get("id")).compareTo((String)a.get("id")));
         return sessions;
     }
