@@ -13,12 +13,18 @@
         body {
             font-family: system-ui, -apple-system, sans-serif;
             background-color: var(--bg-color); color: var(--text-color);
-            margin: 0; padding: 20px; display: grid;
-            grid-template-columns: 1fr 1fr; gap: 20px; height: 90vh;
+            margin: 0; padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto 1fr; /* This fixes the top gap */
+            gap: 20px;
+            height: 100vh;
+            box-sizing: border-box;
         }
         .header-bar {
-            grid-column: 1 / -1; display: flex; justify-content: space-between;
-            align-items: center; margin-bottom: -10px;
+            grid-column: 1 / -1;
+            display: flex; justify-content: space-between;
+            align-items: center;
         }
         .panel {
             background: var(--panel-bg); border: 1px solid var(--border);
@@ -123,6 +129,8 @@
         <input type="text" id="config-domain" value="E-commerce" placeholder="e.g., Food Delivery, Travel Tech, Enterprise Cloud" style="width: 100%; padding: 8px; margin-bottom: 15px; background: #2d2d2d; border: 1px solid var(--border); color: var(--text-color); box-sizing: border-box;">
 
         <label style="display: block; margin-bottom: 5px; color: var(--accent); font-weight: bold;">Target Competencies (Select at least one):</label>
+
+        <!-- Checkbox Group for Multiple Selection -->
         <div class="checkbox-group" id="config-competencies">
             <label class="checkbox-label">
                 <input type="checkbox" value="Product Discussion & Customer Obsession" checked> Product Discussion & Customer Obsession

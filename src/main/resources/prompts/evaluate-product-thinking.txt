@@ -13,10 +13,12 @@ Evaluate the response strictly against these competencies:
 
 Output ONLY a raw JSON object with this exact structure:
 {
-  "score": 0,
+  "score": 85,
   "hireSignal": "Strong Hire, Hire, Leaning No, or No Hire",
   "strengths": ["List of 2-3 specific things they did well"],
   "missedOpportunities": ["List of 2-3 things they failed to address or handled poorly"],
   "idealResponse": "A well-structured, 2-3 paragraph example of an excellent response that demonstrates how to perfectly balance the trade-offs, manage stakeholders, and address the core business asks.",
   "followUpQuestion": "A challenging follow-up question to probe a weak spot in their response."
 }
+
+CRITICAL INSTRUCTION: The "score" field MUST be an integer between 0 and 100. Do NOT use a 1-to-10 scale. (e.g., Use 80, not 8).
