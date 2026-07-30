@@ -26,12 +26,14 @@ public class ReviewController {
     public String getNextProblem(
             @RequestParam(defaultValue = "Java") String language,
             @RequestParam(defaultValue = "Principal") String level,
-            @RequestParam(required = false) String topics) throws Exception {
+            @RequestParam(required = false) String topics,
+            @RequestParam(defaultValue = "Any") String difficulty) throws Exception {
 
         this.activeLanguage = language;
         this.activeLevel = level;
 
-        String problem = geminiService.generateProblem(language, level, topics);
+        // Pass difficulty to the service
+        String problem = geminiService.generateProblem(language, level, topics, difficulty);
         this.activeCodeState = problem;
         return problem;
     }
@@ -39,16 +41,12 @@ public class ReviewController {
     @PostMapping(value = "/evaluate", consumes = "application/json", produces = "application/json")
     public String processEvaluation(@RequestBody String candidateComments) throws Exception {
         String evaluation = geminiService.evaluateReview(this.activeLanguage, this.activeLevel, this.activeCodeState, candidateComments);
-
-        // Save the entire session state to the local workspace disk
         workspaceService.saveSession(activeLanguage, activeLevel, activeCodeState, candidateComments, evaluation);
-
         return evaluation;
     }
 
     @PostMapping(value = "/chat", consumes = "application/json", produces = "application/json")
     public String processChat(@RequestBody Map<String, String> payload) throws Exception {
-        // If scenario is empty in payload, fallback to the controller's active state
         String scenario = payload.getOrDefault("scenario", activeCodeState);
         String missedComment = payload.getOrDefault("missedComment", "");
         String query = payload.getOrDefault("query", "");

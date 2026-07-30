@@ -54,7 +54,7 @@ public class GeminiService {
         return new ArrayList<>(allTopicsCache);
     }
 
-    public String generateProblem(String language, String level, String topics) throws Exception {
+    public String generateProblem(String language, String level, String topics, String difficulty) throws Exception {
         String promptTemplate = readResource(generatePromptResource);
         String finalTopics = topics;
 
@@ -66,7 +66,8 @@ public class GeminiService {
                     .collect(Collectors.joining(", "));
         }
 
-        String prompt = String.format(promptTemplate, level, language, finalTopics);
+        // Added difficulty as the 4th formatting parameter
+        String prompt = String.format(promptTemplate, level, language, finalTopics, difficulty);
         GenerateContentResponse response = client.models.generateContent(model, prompt, null);
         return cleanRawResponse(response.text());
     }

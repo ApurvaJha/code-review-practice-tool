@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Thinking Arena</title>
+    <style>
+        :root {
+            --bg-color: #1e1e1e; --text-color: #d4d4d4;
+            --panel-bg: #252526; --border: #3c3c3c;
+            --accent: #007acc; --success: #4CAF50; --danger: #f44336;
+        }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color); color: var(--text-color);
+            margin: 0; padding: 20px; display: grid;
+            grid-template-columns: 1fr 1fr; gap: 20px; height: 90vh;
+        }
+        .header-bar {
+            grid-column: 1 / -1; display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: -10px;
+        }
+        .panel {
+            background: var(--panel-bg); border: 1px solid var(--border);
+            border-radius: 8px; padding: 20px; overflow-y: auto;
+        }
+        h2, h3 { color: var(--accent); margin-top: 0; }
+        .tag {
+            background: #333; padding: 4px 8px; border-radius: 4px;
+            font-size: 0.85em; color: #aaa;
+        }
+        textarea {
+            width: 100%; height: 300px; background: #1e1e1e;
+            color: #d4d4d4; border: 1px solid var(--border);
+            border-radius: 4px; padding: 10px; font-family: inherit;
+            font-size: 1em; resize: vertical; box-sizing: border-box;
+            margin-top: 10px;
+        }
+        button {
+            background: var(--accent); color: white; border: none;
+            padding: 10px 20px; border-radius: 4px; cursor: pointer;
+            font-size: 1em; margin-top: 15px; width: 100%;
+        }
+        button:hover { background: #005f9e; }
+        button:disabled { background: #555; cursor: not-allowed; }
+        button.secondary { background: #444; width: auto; margin-top: 0; }
+        button.secondary:hover { background: #555; }
+
+        #evaluation-results { display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
+        .score-box { font-size: 1.5em; font-weight: bold; margin-bottom: 10px; }
+        ul { padding-left: 20px; }
+
+        /* Chat UI Styles */
+        .chat-box {
+            background: #1e1e1e; border: 1px solid var(--border);
+            border-radius: 4px; padding: 15px; margin-top: 10px;
+            max-height: 300px; overflow-y: auto;
+        }
+        .message { margin-bottom: 15px; }
+        .msg-pm { color: #ff9800; font-weight: bold; }
+        .msg-you { color: var(--accent); font-weight: bold; }
+        .msg-text { margin-top: 4px; color: #d4d4d4; line-height: 1.4; }
+        .chat-input-row { display: flex; gap: 10px; margin-top: 10px; }
+        .chat-input-row input {
+            flex-grow: 1; background: #2d2d2d; border: 1px solid var(--border);
+            color: white; padding: 10px; border-radius: 4px; font-family: inherit;
+        }
+        .chat-input-row button { width: auto; margin-top: 0; }
+
+        /* Leetcode-style Hints */
+        .hint-container { margin-top: 25px; border-top: 1px solid var(--border); padding-top: 15px; }
+        details.hint {
+            background: #1e1e1e; border: 1px solid var(--border); border-radius: 4px;
+            margin-bottom: 10px; padding: 10px; cursor: pointer;
+        }
+        details.hint summary { font-weight: bold; color: var(--accent); outline: none; }
+        details.hint p { margin: 10px 0 0 0; color: #ccc; font-size: 0.95em; }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7); justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-content {
+            background: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 30px; max-width: 800px; width: 90%; max-height: 85vh; overflow-y: auto;
+            position: relative; line-height: 1.6;
+        }
+        .close-modal {
+            position: absolute; top: 15px; right: 20px; font-size: 1.5em;
+            color: #aaa; cursor: pointer; background: none; border: none; width: auto; padding: 0; margin: 0;
+        }
+        .close-modal:hover { color: white; background: none; }
+        .framework-section { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
+        .framework-section:last-child { border-bottom: none; }
+
+        /* Checkbox Styles */
+        .checkbox-group {
+            background: #2d2d2d; border: 1px solid var(--border); padding: 12px;
+            border-radius: 4px; margin-bottom: 15px;
+        }
+        .checkbox-label {
+            display: block; margin-bottom: 8px; cursor: pointer; color: var(--text-color);
+        }
+        .checkbox-label:last-child { margin-bottom: 0; }
+        .checkbox-label input { margin-right: 8px; accent-color: var(--accent); }
+    </style>
+</head>
+<body>
+
+<!-- Header & Navigation -->
+<div class="header-bar">
+    <a href="index.html" style="color: var(--accent); text-decoration: none; font-size: 1.1em;">&larr; Back to Suite</a>
+    <button class="secondary" onclick="openFrameworks()">📖 View Frameworks</button>
+</div>
+
+<!-- Left Panel: Scenario Context -->
+<div class="panel">
+    <h2 style="margin-bottom: 20px;">Scenario Canvas</h2>
+
+    <div id="config-panel" style="background: #1e1e1e; padding: 15px; border: 1px solid var(--border); border-radius: 4px; margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 5px; color: var(--accent); font-weight: bold;">Industry Domain:</label>
+        <input type="text" id="config-domain" value="E-commerce" placeholder="e.g., Food Delivery, Travel Tech, Enterprise Cloud" style="width: 100%; padding: 8px; margin-bottom: 15px; background: #2d2d2d; border: 1px solid var(--border); color: var(--text-color); box-sizing: border-box;">
+
+        <label style="display: block; margin-bottom: 5px; color: var(--accent); font-weight: bold;">Target Competencies (Select at least one):</label>
+        <div class="checkbox-group" id="config-competencies">
+            <label class="checkbox-label">
+                <input type="checkbox" value="Product Discussion & Customer Obsession" checked> Product Discussion & Customer Obsession
+            </label>
+            <label class="checkbox-label">
+                <input type="checkbox" value="Stakeholder Management & Cross-Functional Alignment"> Stakeholder Management & Alignment
+            </label>
+            <label class="checkbox-label">
+                <input type="checkbox" value="Business & Operations Prioritization"> Business & Operations Prioritization
+            </label>
+        </div>
+
+        <button onclick="loadScenario()" id="generate-btn" style="margin-top: 0;">Generate New Scenario</button>
+    </div>
+
+    <div id="loading-scenario" style="display: none; text-align: center; color: var(--accent); margin-top: 20px;">
+        Drafting scenario with Product Manager persona...
+    </div>
+
+    <div id="scenario-content" style="display: none;">
+        <h3 id="scenario-title"></h3>
+        <span class="tag" id="scenario-competency"></span>
+
+        <h4 style="margin-top: 20px;">Business Background</h4>
+        <p id="scenario-background"></p>
+
+        <h4>The Conflict</h4>
+        <p id="scenario-conflict"></p>
+
+        <div style="background: #333; padding: 15px; border-left: 4px solid var(--accent); margin-top: 20px;">
+            <strong>Prompt:</strong> <span id="scenario-question"></span>
+        </div>
+
+        <!-- Dynamic Hints Container -->
+        <div class="hint-container" id="hints-container">
+            <h4 style="margin-top: 0; color: #aaa;">Hints</h4>
+            <details class="hint"><summary>Hint 1</summary><p id="hint-1"></p></details>
+            <details class="hint"><summary>Hint 2</summary><p id="hint-2"></p></details>
+            <details class="hint"><summary>Hint 3</summary><p id="hint-3"></p></details>
+        </div>
+    </div>
+</div>
+
+<!-- Right Panel: Candidate Response & Evaluation -->
+<div class="panel">
+    <h2>Your Response</h2>
+    <textarea id="candidate-response" placeholder="Articulate your strategy here. Draw upon your extensive background in distributed systems and backend engineering to justify your product trade-offs and manage stakeholder expectations..."></textarea>
+    <button id="submit-btn" onclick="submitResponse()">Submit for Evaluation</button>
+
+    <div id="evaluation-results">
+        <h3>Feedback</h3>
+        <div class="score-box">Score: <span id="eval-score"></span>/100 (<span id="eval-hire"></span>)</div>
+
+        <h4 style="color: var(--success);">Strengths</h4>
+        <ul id="eval-strengths"></ul>
+
+        <h4 style="color: var(--danger);">Missed Opportunities</h4>
+        <ul id="eval-missed"></ul>
+
+        <h4 style="color: #03a9f4;">The Ideal Response Structure</h4>
+        <div style="background: #1e1e1e; padding: 15px; border-left: 4px solid #03a9f4; line-height: 1.5; font-style: italic;">
+            <span id="eval-ideal"></span>
+        </div>
+
+        <!-- Conversational Follow-up Area -->
+        <h4 style="color: #ff9800; margin-top: 30px;">PM Follow-up & Discussion</h4>
+        <div class="chat-box" id="chat-history-container">
+            <!-- Dynamically populated -->
+        </div>
+        <div class="chat-input-row">
+            <input type="text" id="chat-input" placeholder="Defend your position or adapt your strategy here..." onkeypress="handleChatEnter(event)">
+            <button id="chat-btn" onclick="submitChat()">Reply</button>
+        </div>
+    </div>
+</div>
+
+<!-- Frameworks Modal -->
+<div class="modal-overlay" id="framework-modal">
+    <div class="modal-content">
+        <button class="close-modal" onclick="closeFrameworks()">&times;</button>
+        <h2 style="margin-top: 0; border-bottom: 2px solid var(--accent); padding-bottom: 10px;">Engineering Leadership Frameworks</h2>
+
+        <div class="framework-section">
+            <h3>1. Product Discussion & Customer Obsession</h3>
+            <p><strong>Framework: The Translation Layer (Needs vs. Wants)</strong></p>
+            <ul>
+                <li><strong>Clarify the True Need:</strong> Customers ask for features; you must extract the underlying problem. Don't just accept the requirement at face value.</li>
+                <li><strong>Translate to Architecture:</strong> When discussing Product, don't just gather requirements. Translate customer wants into viable backend realities. Proactively suggest alternatives where a desired feature might severely impact distributed consensus, introduce concurrency bottlenecks, or violate availability SLAs.</li>
+                <li><strong>Propose Phased Value:</strong> Suggest a V1 that delivers 80% of the customer value using existing infrastructure, deferring heavy architectural shifts to V2.</li>
+            </ul>
+        </div>
+
+        <div class="framework-section">
+            <h3>2. Stakeholder Management & Alignment</h3>
+            <p><strong>Framework: Empathetic Pushback (The "Yes, and..." Method)</strong></p>
+            <ul>
+                <li><strong>Acknowledge the Goal:</strong> Validate the PM or Business leader's objective first. ("I completely align with hitting the Q3 launch date for this feature.")</li>
+                <li><strong>Expose the Invisible Constraints:</strong> Your role is the bridge. Product managers may not understand the complexities of thread-safe caches, Kafka event streaming, or data replication. Explain the 'why' behind technical pushback using pure business impact (e.g., "If we skip the locking mechanism here to save time, we risk severe data inconsistency during peak checkout load, costing us revenue and trust").</li>
+                <li><strong>Present Options with Trade-offs:</strong> Never just say "no." Give the business leader agency: "Option A is fast but risks downtime. Option B takes 2 weeks longer but scales safely. Which risk profile do we prefer?"</li>
+            </ul>
+        </div>
+
+        <div class="framework-section">
+            <h3>3. Business & Operations Prioritization</h3>
+            <p><strong>Framework: Adjusted RICE (Reach, Impact, Confidence, Effort + Operations)</strong></p>
+            <ul>
+                <li><strong>Factor in Technical Debt:</strong> A feature might have high ROI, but if it requires a massive refactor of a legacy system to handle scale safely, the 'Effort' score must reflect that hidden cost.</li>
+                <li><strong>Operational Readiness:</strong> Always assess what happens *after* the code ships. How will this impact on-call rotations? Do we have the telemetry and alerting in place to support this at scale?</li>
+                <li><strong>Resource Allocation:</strong> Demonstrate how you would balance product feature work with mandatory "keep the lights on" (KTLO) and infrastructure modernization tasks.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    let conversationHistory = "";
+    let openedHints = new Set();
+
+    function openFrameworks() { document.getElementById('framework-modal').style.display = 'flex'; }
+    function closeFrameworks() { document.getElementById('framework-modal').style.display = 'none'; }
+
+    document.getElementById('framework-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeFrameworks();
+    });
+
+    function setupHintTracking() {
+        document.querySelectorAll('details.hint').forEach((detail, index) => {
+            detail.addEventListener('toggle', function(e) {
+                if (this.open) openedHints.add(index);
+            });
+        });
+    }
+
+    async function loadScenario() {
+        const domain = document.getElementById('config-domain').value || 'General Software';
+
+        // Gather all checked competencies
+        const checkedBoxes = document.querySelectorAll('#config-competencies input[type="checkbox"]:checked');
+        if (checkedBoxes.length === 0) {
+            return alert("Please select at least one target competency.");
+        }
+        const competency = Array.from(checkedBoxes).map(cb => cb.value).join(', ');
+
+        const btn = document.getElementById('generate-btn');
+        btn.disabled = true;
+        document.getElementById('loading-scenario').style.display = 'block';
+        document.getElementById('scenario-content').style.display = 'none';
+        document.getElementById('evaluation-results').style.display = 'none';
+        document.getElementById('candidate-response').value = '';
+
+        document.getElementById('chat-history-container').innerHTML = '';
+        conversationHistory = "";
+        openedHints.clear();
+
+        document.querySelectorAll('details.hint').forEach(detail => detail.removeAttribute('open'));
+
+        try {
+            const url = `/api/product-thinking/generate?domain=${encodeURIComponent(domain)}&competency=${encodeURIComponent(competency)}`;
+            const res = await fetch(url);
+            const data = await res.json();
+
+            document.getElementById('loading-scenario').style.display = 'none';
+            document.getElementById('scenario-content').style.display = 'block';
+
+            document.getElementById('scenario-title').innerText = data.title;
+            document.getElementById('scenario-competency').innerText = data.competencyFocus;
+            document.getElementById('scenario-background').innerText = data.background;
+            document.getElementById('scenario-conflict').innerText = data.theConflict;
+            document.getElementById('scenario-question').innerText = data.question;
+
+            if (data.hints && data.hints.length === 3) {
+                document.getElementById('hints-container').style.display = 'block';
+                document.getElementById('hint-1').innerText = data.hints[0];
+                document.getElementById('hint-2').innerText = data.hints[1];
+                document.getElementById('hint-3').innerText = data.hints[2];
+                setupHintTracking();
+            } else {
+                document.getElementById('hints-container').style.display = 'none';
+            }
+
+        } catch (err) {
+            document.getElementById('loading-scenario').innerText = 'Error loading scenario. Check backend logs.';
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function submitResponse() {
+        const responseText = document.getElementById('candidate-response').value;
+        if (!responseText.trim()) return alert("Please enter a response.");
+
+        const btn = document.getElementById('submit-btn');
+        btn.disabled = true;
+        btn.innerText = "Evaluating...";
+
+        try {
+            const payload = {
+                text: responseText,
+                hintsUsed: openedHints.size
+            };
+
+            const res = await fetch('/api/product-thinking/evaluate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            document.getElementById('evaluation-results').style.display = 'block';
+            document.getElementById('eval-score').innerText = data.score;
+            document.getElementById('eval-hire').innerText = data.hireSignal;
+
+            document.getElementById('eval-strengths').innerHTML = data.strengths.map(s => `<li>${s}</li>`).join('');
+            document.getElementById('eval-missed').innerHTML = data.missedOpportunities.map(m => `<li>${m}</li>`).join('');
+            document.getElementById('eval-ideal').innerText = data.idealResponse;
+
+            const chatContainer = document.getElementById('chat-history-container');
+            chatContainer.innerHTML = `
+                    <div class="message">
+                        <div class="msg-pm">Senior PM:</div>
+                        <div class="msg-text">${data.followUpQuestion}</div>
+                    </div>
+                `;
+
+            conversationHistory = "PM: " + data.followUpQuestion + "\n";
+            document.getElementById('evaluation-results').scrollIntoView({ behavior: 'smooth' });
+
+        } catch (err) {
+            alert("Error evaluating response.");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Submit for Evaluation";
+        }
+    }
+
+    function handleChatEnter(e) { if (e.key === 'Enter') submitChat(); }
+
+    async function submitChat() {
+        const inputField = document.getElementById('chat-input');
+        const chatText = inputField.value;
+        if (!chatText.trim()) return;
+
+        const btn = document.getElementById('chat-btn');
+        btn.disabled = true; inputField.disabled = true;
+
+        const chatContainer = document.getElementById('chat-history-container');
+
+        chatContainer.innerHTML += `
+                <div class="message">
+                    <div class="msg-you">You:</div>
+                    <div class="msg-text">${chatText}</div>
+                </div>
+            `;
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        inputField.value = '';
+
+        try {
+            const res = await fetch('/api/product-thinking/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: chatText, history: conversationHistory })
+            });
+            const pmReply = await res.text();
+
+            chatContainer.innerHTML += `
+                    <div class="message">
+                        <div class="msg-pm">Senior PM:</div>
+                        <div class="msg-text">${pmReply}</div>
+                    </div>
+                `;
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            conversationHistory += `Candidate: ${chatText}\nPM: ${pmReply}\n`;
+
+        } catch (err) {
+            chatContainer.innerHTML += `<div class="message"><div class="msg-text" style="color:var(--danger)">Error connecting to PM...</div></div>`;
+        } finally {
+            btn.disabled = false; inputField.disabled = false; inputField.focus();
+        }
+    }
+</script>
+</body>
+</html>

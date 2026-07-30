@@ -2,245 +2,276 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Analytics Dashboard - Architectural Arena</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard - Interview Practice Suite</title>
+    <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --bg-main: #0f172a; --bg-surface: #1e293b; --border-color: #334155;
-            --text-main: #f8fafc; --text-muted: #94a3b8; --accent: #38bdf8;
-            --success: #22c55e; --danger: #ef4444; --warning: #eab308;
+            --bg-color: #1e1e1e;
+            --text-color: #d4d4d4;
+            --panel-bg: #252526;
+            --border: #3c3c3c;
+            --accent: #007acc;
+            --success: #4CAF50;
+            --danger: #f44336;
+            --warning: #ff9800;
         }
-        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background-color: var(--bg-main); color: var(--text-main); }
-        header { background-color: var(--bg-surface); padding: 1rem 2rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
-        h1 { margin: 0; font-size: 1.25rem; color: var(--accent); }
-        .btn-outline { background-color: transparent; color: var(--accent); border: 1px solid var(--accent); padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 0.9rem; }
-        .btn-outline:hover { background-color: rgba(56, 189, 248, 0.1); }
-
-        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; display: grid; gap: 2rem; }
-        .card { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; }
-        .card-title { font-size: 1.1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
-
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
-
-        .topic-stat { display: flex; justify-content: space-between; padding: 0.75rem; border-bottom: 1px solid var(--border-color); align-items: center; }
-        .topic-stat:last-child { border-bottom: none; }
-        .topic-name { font-weight: bold; font-size: 0.95rem; }
-        .topic-details { font-size: 0.8rem; color: var(--text-muted); }
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
-        .badge-success { background: rgba(34, 197, 94, 0.1); color: var(--success); border: 1px solid var(--success); }
-        .badge-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); }
-
-        .history-list { display: flex; flex-direction: column; gap: 0.5rem; }
-        .history-item { background: #0f172a; padding: 1rem; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; transition: all 0.2s; align-items: center; }
-        .history-item:hover { border-color: var(--accent); background: rgba(56, 189, 248, 0.05); }
-        .pill { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; margin-right: 6px; }
-
-        /* Loading State */
-        .loading { text-align: center; color: var(--text-muted); padding: 3rem; font-size: 1.2rem; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        .header a:hover {
+            text-decoration: underline;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.95em;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            color: var(--accent);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            background: var(--panel-bg);
+        }
+        tr:hover {
+            background-color: #2a2d2e;
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            color: white;
+            font-weight: bold;
+        }
+        .badge-cr { background-color: #555; }
+        .badge-pt { background-color: #007acc; }
     </style>
 </head>
 <body>
+<div class="header">
+    <h2>Analytics Dashboard</h2>
+    <a href="index.html">&larr; Back to Suite Portal</a>
+</div>
 
-<header>
-    <h1>Architectural Assessment Analytics</h1>
-    <a href="/" class="btn-outline">← Back to Arena</a>
-</header>
-
-<div class="container" id="dashboard" style="display: none;">
-    <!-- Graph Section -->
-    <div class="card">
-        <div class="card-title">Rigor Score Progression</div>
-        <div style="height: 300px; width: 100%;">
+<div class="dashboard-grid">
+    <!-- Chart Panel -->
+    <div class="panel">
+        <h3 style="margin-top: 0; color: var(--accent);">Score Progression Over Time</h3>
+        <div style="position: relative; height: 300px; width: 100%;">
             <canvas id="scoreChart"></canvas>
         </div>
     </div>
 
-    <!-- Analytics Section -->
-    <div class="grid-2">
-        <div class="card">
-            <div class="card-title" style="color: var(--success);">Top Strengths (Flaws Caught)</div>
-            <div id="strengths-list"></div>
-        </div>
-        <div class="card">
-            <div class="card-title" style="color: var(--danger);">Critical Blind Spots (Flaws Missed)</div>
-            <div id="weaknesses-list"></div>
-        </div>
-    </div>
-
-    <!-- Session Log -->
-    <div class="card">
-        <div class="card-title">Session History Log</div>
-        <div class="history-list" id="session-log"></div>
+    <!-- History Table Panel -->
+    <div class="panel">
+        <h3 style="margin-top: 0; color: var(--accent);">Session History</h3>
+        <table>
+            <thead>
+            <tr>
+                <th>Date & Time</th>
+                <th>Module</th>
+                <th>Context / Target</th>
+                <th>Focus Area / Competency</th>
+                <th>Score</th>
+                <th>Signal</th>
+            </tr>
+            </thead>
+            <tbody id="history-tbody">
+            <tr><td colspan="6" style="text-align: center; padding: 20px;">Loading history...</td></tr>
+            </tbody>
+        </table>
     </div>
 </div>
 
-<div id="loading-state" class="loading">Crunching your code review data...</div>
-
 <script>
-    async function loadAnalytics() {
+    async function loadHistory() {
         try {
+            // Fetch the unified session list from the existing ReviewController endpoint
             const res = await fetch('/api/sessions');
             const sessions = await res.json();
 
-            document.getElementById('loading-state').style.display = 'none';
-            document.getElementById('dashboard').style.display = 'grid';
+            const tbody = document.getElementById('history-tbody');
+            tbody.innerHTML = '';
 
             if (sessions.length === 0) {
-                document.getElementById('dashboard').innerHTML = '<div class="card"><div class="loading">No practice data found. Go catch some bugs!</div></div>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No sessions recorded yet. Complete a module to see analytics.</td></tr>';
                 return;
             }
 
-            renderChart(sessions);
-            calculateTopicMetrics(sessions);
-            renderSessionLog(sessions);
+            // Data arrays for Chart.js
+            // Reverse the array so the chart reads left-to-right chronologically
+            const chronologicalSessions = [...sessions].reverse();
+            const labels = [];
+            const crScores = [];
+            const ptScores = [];
 
-        } catch (error) {
-            document.getElementById('loading-state').innerText = 'Failed to load analytics data from server.';
+            // 1. Populate the Table (using the original descending order)
+            sessions.forEach(session => {
+                const tr = document.createElement('tr');
+
+                // Format Timestamp cleanly
+                const dateObj = session.timestamp && session.timestamp !== "Unknown Time"
+                    ? new Date(session.timestamp.replace(' ', 'T'))
+                    : new Date(parseInt(session.id));
+                const dateStr = isNaN(dateObj) ? "Unknown Date" :
+                    `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+
+                if (session.moduleType === 'PRODUCT_THINKING') {
+                    // Render EM Product Row
+                    tr.innerHTML = `
+                            <td>${dateStr}</td>
+                            <td><span class="badge badge-pt">EM Product</span></td>
+                            <td>${session.title || 'Manager Scenario'}</td>
+                            <td>${session.competency || 'N/A'}</td>
+                            <td><strong>${session.score || 0}/100</strong></td>
+                            <td>${session.hireSignal || 'Pending'}</td>
+                        `;
+                } else {
+                    // Render Legacy Code Review Row
+                    const focusStr = (session.focusAreas && session.focusAreas.length > 0)
+                        ? session.focusAreas.join(', ')
+                        : 'Mixed';
+
+                    tr.innerHTML = `
+                            <td>${dateStr}</td>
+                            <td><span class="badge badge-cr">Code Review</span></td>
+                            <td>${session.language || 'Unknown'} (${session.level || 'Unknown'})</td>
+                            <td>${focusStr}</td>
+                            <td><strong>${session.score || 0}/100</strong></td>
+                            <td>${session.hireSignal || 'Pending'}</td>
+                        `;
+                }
+                tbody.appendChild(tr);
+            });
+
+            // 2. Populate the Chart (using chronological order)
+            chronologicalSessions.forEach(session => {
+                const dateObj = session.timestamp && session.timestamp !== "Unknown Time"
+                    ? new Date(session.timestamp.replace(' ', 'T'))
+                    : new Date(parseInt(session.id));
+
+                const label = isNaN(dateObj) ? "Unknown" : dateObj.toLocaleDateString();
+                labels.push(label);
+
+                // Separate the scores into two distinct datasets based on moduleType
+                if (session.moduleType === 'PRODUCT_THINKING') {
+                    ptScores.push(session.score || 0);
+                    crScores.push(null); // Keep alignment for spanGaps
+                } else {
+                    crScores.push(session.score || 0);
+                    ptScores.push(null); // Keep alignment for spanGaps
+                }
+            });
+
+            renderChart(labels, crScores, ptScores);
+
+        } catch (err) {
+            console.error("Error loading history:", err);
+            document.getElementById('history-tbody').innerHTML = `
+                    <tr><td colspan="6" style="text-align: center; color: var(--danger); padding: 20px;">
+                        Failed to load history data. Make sure the backend is running.
+                    </td></tr>
+                `;
         }
     }
 
-    function renderChart(sessions) {
-        // Reverse array to chronological order (oldest to newest) for the chart
-        const chrono = [...sessions].reverse();
-
-        const labels = chrono.map((s, i) => `Session ${i + 1}`);
-        const data = chrono.map(s => s.score || 0);
-
+    function renderChart(labels, crScores, ptScores) {
         const ctx = document.getElementById('scoreChart').getContext('2d');
+
+        // Chart.js Configuration
         new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
-                datasets: [{
-                    label: 'Code Review Rigor Score',
-                    data: data,
-                    borderColor: '#38bdf8',
-                    backgroundColor: 'rgba(56, 189, 248, 0.1)',
-                    borderWidth: 3,
-                    pointBackgroundColor: '#0f172a',
-                    pointBorderColor: '#38bdf8',
-                    pointBorderWidth: 2,
-                    pointRadius: 4,
-                    fill: true,
-                    tension: 0.3
-                }]
+                datasets: [
+                    {
+                        label: 'Code Review Score',
+                        data: crScores,
+                        borderColor: '#888',
+                        backgroundColor: '#888',
+                        borderWidth: 2,
+                        spanGaps: true, // Connect lines across null values
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: 'Product Thinking Score',
+                        data: ptScores,
+                        borderColor: '#007acc',
+                        backgroundColor: '#007acc',
+                        borderWidth: 2,
+                        spanGaps: true, // Connect lines across null values
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }
+                ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    y: { beginAtZero: true, max: 100, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
-                    x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: { color: '#3c3c3c' },
+                        ticks: { color: '#d4d4d4' }
+                    },
+                    x: {
+                        grid: { color: '#3c3c3c' },
+                        ticks: { color: '#d4d4d4' }
+                    }
                 },
-                plugins: { legend: { labels: { color: '#f8fafc' } } }
+                plugins: {
+                    legend: {
+                        labels: { color: '#d4d4d4', font: { size: 14 } }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                    }
+                }
             }
         });
     }
 
-    function calculateTopicMetrics(sessions) {
-        const topicStats = {};
-
-        // Aggregate counts by focus area
-        sessions.forEach(s => {
-            if (s.focusAreas) {
-                s.focusAreas.forEach(topic => {
-                    if (!topicStats[topic]) topicStats[topic] = { accurate: 0, missed: 0, total: 0 };
-                    topicStats[topic].accurate += s.accurateCount;
-                    topicStats[topic].missed += s.missedCount;
-                    topicStats[topic].total += (s.accurateCount + s.missedCount);
-                });
-            }
-        });
-
-        // Convert to array and calculate win rate
-        const statsArray = Object.keys(topicStats).map(topic => {
-            const stat = topicStats[topic];
-            // If they had 0 flaws in a topic overall, win rate is 0
-            const winRate = stat.total > 0 ? (stat.accurate / stat.total) * 100 : 0;
-            return { topic, winRate, ...stat };
-        });
-
-        // Filter out topics they haven't actively interacted with enough
-        const activeTopics = statsArray.filter(t => t.total > 0);
-
-        // Sort descending by win rate
-        activeTopics.sort((a, b) => b.winRate - a.winRate);
-
-        const strengthsContainer = document.getElementById('strengths-list');
-        const weaknessesContainer = document.getElementById('weaknesses-list');
-
-        if (activeTopics.length === 0) {
-            strengthsContainer.innerHTML = '<div style="color:var(--text-muted); font-size:0.9rem;">Not enough data.</div>';
-            weaknessesContainer.innerHTML = '<div style="color:var(--text-muted); font-size:0.9rem;">Not enough data.</div>';
-            return;
-        }
-
-        // Top 3 Strengths
-        const top3 = activeTopics.slice(0, 3);
-        top3.forEach(t => {
-            strengthsContainer.innerHTML += `
-                <div class="topic-stat">
-                    <div>
-                        <div class="topic-name">${t.topic}</div>
-                        <div class="topic-details">Caught ${t.accurate} out of ${t.total} bugs</div>
-                    </div>
-                    <div class="badge badge-success">${Math.round(t.winRate)}% Catch Rate</div>
-                </div>`;
-        });
-
-        // Bottom 3 Weaknesses (Reverse array)
-        const bottom3 = [...activeTopics].reverse().slice(0, 3);
-        bottom3.forEach(t => {
-            weaknessesContainer.innerHTML += `
-                <div class="topic-stat">
-                    <div>
-                        <div class="topic-name">${t.topic}</div>
-                        <div class="topic-details">Missed ${t.missed} out of ${t.total} bugs</div>
-                    </div>
-                    <div class="badge badge-danger">${Math.round(t.winRate)}% Catch Rate</div>
-                </div>`;
-        });
-    }
-
-    function renderSessionLog(sessions) {
-        const container = document.getElementById('session-log');
-
-        sessions.forEach(s => {
-            let hireColor = '#ef4444'; // default red
-            const hs = (s.hireSignal || '').toLowerCase();
-            if (hs.includes('strong hire')) hireColor = '#22c55e';
-            else if (hs.includes('hire') && !hs.includes('no')) hireColor = '#84cc16';
-            else if (hs.includes('lean')) hireColor = '#eab308';
-
-            const topicsHtml = (s.focusAreas || []).map(t => `<span class="pill" style="background: #334155; color: #f8fafc;">${t}</span>`).join('');
-
-            container.innerHTML += `
-                <div class="history-item" onclick="window.location.href='/index.html?session=${s.id}'">
-                    <div style="flex: 1;">
-                        <div style="font-size: 1.1rem; font-weight: bold; margin-bottom: 8px;">
-                            ${s.level} - ${s.language}
-                        </div>
-                        <div style="margin-bottom: 8px;">${topicsHtml}</div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted);">${s.timestamp}</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 1.2rem; font-weight: bold; color: ${hireColor}; margin-bottom: 4px;">
-                            ${s.hireSignal}
-                        </div>
-                        <div style="font-size: 0.9rem; color: var(--text-muted);">
-                            Score: <span style="color: var(--text-main); font-weight: bold;">${s.score}/100</span>
-                        </div>
-                        <div style="font-size: 0.75rem; margin-top: 4px; color: var(--text-muted);">
-                            <span style="color: var(--success)">✓ ${s.accurateCount}</span> |
-                            <span style="color: var(--danger)">✗ ${s.missedCount}</span>
-                        </div>
-                    </div>
-                </div>`;
-        });
-    }
-
-    // Initialize
-    window.onload = loadAnalytics;
+    // Initialize script on page load
+    loadHistory();
 </script>
 </body>
 </html>

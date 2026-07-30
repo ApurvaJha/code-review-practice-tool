@@ -62,67 +62,91 @@ public class WorkspaceService {
         }
     }
 
+    // --- ADD THIS NEW METHOD TO WorkspaceService ---
+    public void saveProductThinkingSession(String moduleType, String competency, String scenario, String candidateResponse, String evaluation) {
+        try {
+            String id = String.valueOf(System.currentTimeMillis());
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            ObjectNode sessionNode = mapper.createObjectNode();
+
+            sessionNode.put("id", id);
+            sessionNode.put("timestamp", timestamp);
+            sessionNode.put("moduleType", moduleType);
+            sessionNode.put("competency", competency);
+
+            try { sessionNode.set("scenario", mapper.readTree(scenario)); } catch (Exception e) { sessionNode.put("scenario", scenario); }
+            sessionNode.put("candidateResponse", candidateResponse);
+            try { sessionNode.set("evaluation", mapper.readTree(evaluation)); } catch (Exception e) { sessionNode.put("evaluation", evaluation); }
+
+            Path filePath = WORKSPACE_DIR.resolve(id + ".json");
+            mapper.writerWithDefaultPrettyPrinter().writeValue(filePath.toFile(), sessionNode);
+        } catch (Exception e) {
+            System.err.println("❌ Critical error saving Product Thinking session to disk: " + e.getMessage());
+        }
+    }
+
+    // --- UPDATE YOUR EXISTING listSessions() METHOD ---
     public List<Map<String, Object>> listSessions() {
         File[] files = WORKSPACE_DIR.toFile().listFiles((d, name) -> name.endsWith(".json"));
         if (files == null || files.length == 0) return Collections.emptyList();
-
         List<Map<String, Object>> sessions = new ArrayList<>();
-
         for (File f : files) {
             try {
                 JsonNode root = mapper.readTree(f);
                 Map<String, Object> summary = new HashMap<>();
-
                 summary.put("id", root.path("id").asText(f.getName()));
                 summary.put("timestamp", root.path("timestamp").asText("Unknown Time"));
-                summary.put("language", root.path("language").asText("Unknown"));
-                summary.put("level", root.path("level").asText("Unknown"));
 
-                JsonNode scenarioNode = root.path("scenario");
+                // Identify the module type
+                String moduleType = root.path("moduleType").asText("CODE_REVIEW");
+                summary.put("moduleType", moduleType);
 
-                // NEW: Extract difficulty (fails gracefully to empty string if missing in older files)
-                summary.put("difficulty", scenarioNode.path("difficulty").asText(""));
+                if ("PRODUCT_THINKING".equals(moduleType)) {
+                    // Parse fields specific to Product Thinking rounds
+                    summary.put("competency", root.path("competency").asText("Unknown"));
+                    JsonNode scenarioNode = root.path("scenario");
+                    summary.put("title", scenarioNode.path("title").asText("Manager Scenario"));
 
-                List<String> focusAreas = new ArrayList<>();
-                JsonNode focusNode = scenarioNode.path("focusAreas");
-                if (focusNode.isArray()) {
-                    for (JsonNode area : focusNode) {
-                        focusAreas.add(area.path("tag").asText());
-                    }
-                }
-                summary.put("focusAreas", focusAreas);
-
-                JsonNode eval = root.path("evaluation");
-                int accurate = 0; int missed = 0; int superfluous = 0;
-
-                if (!eval.isMissingNode()) {
-                    summary.put("score", eval.path("score").asInt(0));
-                    summary.put("hireSignal", eval.path("hireSignal").asText("Pending"));
-
-                    JsonNode feedback = eval.path("inlineFeedback");
-                    if (feedback.isArray()) {
-                        for (JsonNode fb : feedback) {
-                            String type = fb.path("type").asText("").toLowerCase();
-                            if (type.equals("accurate")) accurate++;
-                            else if (type.equals("missed")) missed++;
-                            else if (type.equals("superfluous")) superfluous++;
-                        }
+                    JsonNode eval = root.path("evaluation");
+                    if (!eval.isMissingNode()) {
+                        summary.put("score", eval.path("score").asInt(0));
+                        summary.put("hireSignal", eval.path("hireSignal").asText("Pending"));
                     }
                 } else {
-                    summary.put("score", 0);
-                    summary.put("hireSignal", "Pending");
+                    // Parse legacy fields for Code Review rounds
+                    summary.put("language", root.path("language").asText("Unknown"));
+                    summary.put("level", root.path("level").asText("Unknown"));
+                    JsonNode scenarioNode = root.path("scenario");
+                    summary.put("difficulty", scenarioNode.path("difficulty").asText(""));
+                    List<String> focusAreas = new ArrayList<>();
+                    JsonNode focusNode = scenarioNode.path("focusAreas");
+                    if (focusNode.isArray()) { for (JsonNode area : focusNode) { focusAreas.add(area.path("tag").asText()); } }
+                    summary.put("focusAreas", focusAreas);
+
+                    JsonNode eval = root.path("evaluation");
+                    int accurate = 0; int missed = 0; int superfluous = 0;
+                    if (!eval.isMissingNode()) {
+                        summary.put("score", eval.path("score").asInt(0));
+                        summary.put("hireSignal", eval.path("hireSignal").asText("Pending"));
+                        JsonNode feedback = eval.path("inlineFeedback");
+                        if (feedback.isArray()) {
+                            for (JsonNode fb : feedback) {
+                                String type = fb.path("type").asText("").toLowerCase();
+                                if (type.equals("accurate")) accurate++;
+                                else if (type.equals("missed")) missed++;
+                                else if (type.equals("superfluous")) superfluous++;
+                            }
+                        }
+                    } else { summary.put("score", 0); summary.put("hireSignal", "Pending"); }
+                    summary.put("accurateCount", accurate);
+                    summary.put("missedCount", missed);
+                    summary.put("superfluousCount", superfluous);
                 }
-
-                summary.put("accurateCount", accurate);
-                summary.put("missedCount", missed);
-                summary.put("superfluousCount", superfluous);
-
                 sessions.add(summary);
             } catch (Exception e) {
-                System.err.println("⚠️ Warning: Skipping corrupted session file: " + f.getName());
+                // Skip invalid JSON files silently
             }
         }
-
         sessions.sort((a, b) -> ((String)b.get("id")).compareTo((String)a.get("id")));
         return sessions;
     }
