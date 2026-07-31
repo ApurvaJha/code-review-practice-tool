@@ -10,7 +10,6 @@ public class ProductThinkingController {
     private final ProductThinkingGeminiService productThinkingService;
     private final WorkspaceService workspaceService;
 
-    // State management for the current session
     private String activeScenario = "";
     private String activeCompetency = "";
     private String activeInitialResponse = "";
@@ -26,17 +25,22 @@ public class ProductThinkingController {
             @RequestParam(defaultValue = "E-commerce") String domain,
             @RequestParam(defaultValue = "Product Discussion & Customer Obsession") String competency) throws Exception {
         this.activeCompetency = competency;
-        String scenario = productThinkingService.generateScenario(domain, competency);
+
+        String pastTopics = workspaceService.getRecentProductKeywords();
+        String scenario = productThinkingService.generateScenario(domain, competency, pastTopics);
+
         this.activeScenario = scenario;
         return scenario;
     }
 
     @PostMapping(value = "/evaluate", consumes = "application/json", produces = "application/json")
-    public String processEvaluation(@RequestBody String candidateResponse) throws Exception {
+    public String processEvaluation(@RequestBody Map<String, Object> payload) throws Exception {
+        String candidateResponse = (String) payload.getOrDefault("text", "");
+        int hintsUsed = (Integer) payload.getOrDefault("hintsUsed", 0);
+
         this.activeInitialResponse = candidateResponse;
         String evaluation = productThinkingService.evaluateResponse(this.activeScenario, candidateResponse);
 
-        // Extract the follow-up question for context in future chats (quick string manipulation or parsing)
         try {
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(evaluation);
@@ -50,12 +54,13 @@ public class ProductThinkingController {
                 activeCompetency,
                 activeScenario,
                 candidateResponse,
-                evaluation
+                evaluation,
+                hintsUsed
         );
         return evaluation;
     }
 
-    @PostMapping(value = "/chat", consumes = "application/json", produces = "text/plain")
+    @PostMapping(value = "/chat", consumes = "application/json", produces = "application/json")
     public String processChat(@RequestBody Map<String, String> payload) throws Exception {
         String query = payload.getOrDefault("query", "");
         String history = payload.getOrDefault("history", "");

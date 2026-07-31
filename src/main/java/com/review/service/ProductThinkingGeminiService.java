@@ -23,9 +23,9 @@ public class ProductThinkingGeminiService {
         return new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
     }
 
-    public String generateScenario(String domain, String competency) throws Exception {
+    public String generateScenario(String domain, String competency, String pastTopics) throws Exception {
         String promptTemplate = readResource(generatePromptResource);
-        String prompt = String.format(promptTemplate, domain, competency);
+        String prompt = String.format(promptTemplate, domain, competency, pastTopics);
         GenerateContentResponse response = client.models.generateContent(model, prompt, null);
         return cleanRawResponse(response.text());
     }

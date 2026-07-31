@@ -1,11 +1,9 @@
 package com.review.service;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.stereotype.Service;
 import jakarta.annotation.PostConstruct;
-
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,54 +14,39 @@ import java.util.*;
 
 @Service
 public class WorkspaceService {
-
     private final Path WORKSPACE_DIR = Paths.get(System.getProperty("user.home"), ".architectural-arena", "workspace");
     private final ObjectMapper mapper = new ObjectMapper();
 
     @PostConstruct
     public void init() {
         try {
-            if (!Files.exists(WORKSPACE_DIR)) {
-                Files.createDirectories(WORKSPACE_DIR);
-                System.out.println("✅ Created permanent workspace directory at: " + WORKSPACE_DIR.toAbsolutePath());
-            } else {
-                System.out.println("✅ Using existing workspace directory at: " + WORKSPACE_DIR.toAbsolutePath());
-            }
-        } catch (Exception e) {
-            System.err.println("❌ Failed to create workspace directory: " + e.getMessage());
-        }
+            if (!Files.exists(WORKSPACE_DIR)) { Files.createDirectories(WORKSPACE_DIR); }
+        } catch (Exception e) { System.err.println("❌ Failed to create workspace directory: " + e.getMessage()); }
     }
 
+    // --- Legacy Code Review Save ---
     public void saveSession(String language, String level, String scenario, String comments, String evaluation) {
         try {
             String id = String.valueOf(System.currentTimeMillis());
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-
             ObjectNode sessionNode = mapper.createObjectNode();
             sessionNode.put("id", id);
             sessionNode.put("timestamp", timestamp);
+            sessionNode.put("moduleType", "CODE_REVIEW");
             sessionNode.put("language", language);
             sessionNode.put("level", level);
 
-            try { sessionNode.set("scenario", mapper.readTree(scenario)); }
-            catch (Exception e) { sessionNode.set("scenario", mapper.createObjectNode()); }
-
-            try { sessionNode.set("comments", mapper.readTree(comments)); }
-            catch (Exception e) { sessionNode.set("comments", mapper.createObjectNode()); }
-
-            try { sessionNode.set("evaluation", mapper.readTree(evaluation)); }
-            catch (Exception e) { sessionNode.set("evaluation", mapper.createObjectNode()); }
+            try { sessionNode.set("scenario", mapper.readTree(scenario)); } catch (Exception e) { sessionNode.set("scenario", mapper.createObjectNode()); }
+            try { sessionNode.set("comments", mapper.readTree(comments)); } catch (Exception e) { sessionNode.set("comments", mapper.createObjectNode()); }
+            try { sessionNode.set("evaluation", mapper.readTree(evaluation)); } catch (Exception e) { sessionNode.set("evaluation", mapper.createObjectNode()); }
 
             Path filePath = WORKSPACE_DIR.resolve(id + ".json");
             mapper.writerWithDefaultPrettyPrinter().writeValue(filePath.toFile(), sessionNode);
-
-        } catch (Exception e) {
-            System.err.println("❌ Critical error saving session to disk: " + e.getMessage());
-        }
+        } catch (Exception e) { System.err.println("❌ Critical error saving session to disk: " + e.getMessage()); }
     }
 
-    // --- ADD THIS NEW METHOD TO WorkspaceService ---
-    public void saveProductThinkingSession(String moduleType, String competency, String scenario, String candidateResponse, String evaluation) {
+    // --- New Product Thinking Save ---
+    public void saveProductThinkingSession(String moduleType, String competency, String scenario, String candidateResponse, String evaluation, int hintsUsed) {
         try {
             String id = String.valueOf(System.currentTimeMillis());
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
@@ -73,6 +56,7 @@ public class WorkspaceService {
             sessionNode.put("timestamp", timestamp);
             sessionNode.put("moduleType", moduleType);
             sessionNode.put("competency", competency);
+            sessionNode.put("hintsUsed", hintsUsed);
 
             try { sessionNode.set("scenario", mapper.readTree(scenario)); } catch (Exception e) { sessionNode.put("scenario", scenario); }
             sessionNode.put("candidateResponse", candidateResponse);
@@ -85,7 +69,29 @@ public class WorkspaceService {
         }
     }
 
-    // --- UPDATE YOUR EXISTING listSessions() METHOD ---
+    // --- Anti-Repetition Keyword Extraction ---
+    public String getRecentProductKeywords() {
+        File[] files = WORKSPACE_DIR.toFile().listFiles((d, name) -> name.endsWith(".json"));
+        if (files == null || files.length == 0) return "None";
+
+        List<String> tags = new ArrayList<>();
+        Arrays.sort(files, Comparator.comparingLong(File::lastModified).reversed());
+
+        for (File f : files) {
+            try {
+                JsonNode root = mapper.readTree(f);
+                if ("PRODUCT_THINKING".equals(root.path("moduleType").asText())) {
+                    JsonNode keywords = root.path("scenario").path("keywords");
+                    if (keywords.isArray()) {
+                        for (JsonNode kw : keywords) { tags.add(kw.asText()); }
+                    }
+                    if (tags.size() >= 15) break;
+                }
+            } catch (Exception e) { /* skip unparseable files */ }
+        }
+        return tags.isEmpty() ? "None" : String.join(", ", tags);
+    }
+
     public List<Map<String, Object>> listSessions() {
         File[] files = WORKSPACE_DIR.toFile().listFiles((d, name) -> name.endsWith(".json"));
         if (files == null || files.length == 0) return Collections.emptyList();
@@ -97,13 +103,12 @@ public class WorkspaceService {
                 summary.put("id", root.path("id").asText(f.getName()));
                 summary.put("timestamp", root.path("timestamp").asText("Unknown Time"));
 
-                // Identify the module type
                 String moduleType = root.path("moduleType").asText("CODE_REVIEW");
                 summary.put("moduleType", moduleType);
 
                 if ("PRODUCT_THINKING".equals(moduleType)) {
-                    // Parse fields specific to Product Thinking rounds
                     summary.put("competency", root.path("competency").asText("Unknown"));
+                    summary.put("hintsUsed", root.path("hintsUsed").asInt(0));
                     JsonNode scenarioNode = root.path("scenario");
                     summary.put("title", scenarioNode.path("title").asText("Manager Scenario"));
 
@@ -113,7 +118,6 @@ public class WorkspaceService {
                         summary.put("hireSignal", eval.path("hireSignal").asText("Pending"));
                     }
                 } else {
-                    // Parse legacy fields for Code Review rounds
                     summary.put("language", root.path("language").asText("Unknown"));
                     summary.put("level", root.path("level").asText("Unknown"));
                     JsonNode scenarioNode = root.path("scenario");
@@ -143,16 +147,13 @@ public class WorkspaceService {
                     summary.put("superfluousCount", superfluous);
                 }
                 sessions.add(summary);
-            } catch (Exception e) {
-                // Skip invalid JSON files silently
-            }
+            } catch (Exception e) {}
         }
         sessions.sort((a, b) -> ((String)b.get("id")).compareTo((String)a.get("id")));
         return sessions;
     }
 
     public String getSession(String id) throws Exception {
-        Path path = WORKSPACE_DIR.resolve(id + ".json");
-        return Files.readString(path);
+        return Files.readString(WORKSPACE_DIR.resolve(id + ".json"));
     }
 }

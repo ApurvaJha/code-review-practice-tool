@@ -6,7 +6,7 @@ SCENARIO CONTEXT:
 CANDIDATE'S INITIAL ANSWER:
 %s
 
-YOUR INITIAL FOLLOW-UP QUESTION:
+YOUR INITIAL FOLLOW-UP QUESTION (or last message):
 %s
 
 CONVERSATION HISTORY:
@@ -15,6 +15,18 @@ CONVERSATION HISTORY:
 CANDIDATE'S LATEST REPLY:
 %s
 
-Respond to the candidate strictly in character as the Product Manager. If they answered your previous follow-up well, acknowledge it and either probe a new angle or state that you are satisfied with their strategy. If they missed the mark, push back politely but firmly on the business or technical reality.
+Evaluate the candidate's latest reply.
+1. Formulate your conversational response as the PM (either probing further, pushing back, or concluding).
+2. Score their latest reply based on how well they defended their trade-offs and managed stakeholders.
+3. Identify missed opportunities in their latest reply.
+4. Provide an ideal way they could have framed their defense.
 
-Keep your response concise (1-2 paragraphs). Output raw text only. Do NOT output JSON.
+Output ONLY a raw JSON object with this exact structure:
+{
+  "pmReply": "Your in-character response to the candidate (1-2 paragraphs).",
+  "score": 85,
+  "missedOpportunities": ["List of 1-2 things they missed or failed to defend well"],
+  "idealResponse": "A 1 paragraph example of an excellent defense/reply to your previous follow-up."
+}
+
+CRITICAL INSTRUCTION: The "score" field MUST be an integer between 0 and 100.

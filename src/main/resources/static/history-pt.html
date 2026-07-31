@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Leadership Analytics</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --text-color: #d4d4d4;
+            --panel-bg: #252526;
+            --border: #3c3c3c;
+            --accent: #007acc;
+        }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        .header a:hover {
+            text-decoration: underline;
+        }
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.95em;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            color: var(--accent);
+            font-weight: 600;
+        }
+        tr.clickable:hover {
+            background-color: #2a2d2e;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h2>Product Leadership Analytics</h2>
+    <a href="product-thinking.html">&larr; Back to Product Arena</a>
+</div>
+
+<div class="panel">
+    <h3 style="margin-top: 0; color: var(--accent);">Score Progression</h3>
+    <div style="position: relative; height: 300px; width: 100%;">
+        <canvas id="scoreChart"></canvas>
+    </div>
+</div>
+
+<div class="panel">
+    <h3 style="margin-top: 0; color: var(--accent);">Session History</h3>
+    <table>
+        <thead>
+        <tr>
+            <th>Date</th>
+            <th>Scenario</th>
+            <th>Competencies</th>
+            <th>Score</th>
+            <th>Signal</th>
+        </tr>
+        </thead>
+        <tbody id="history-tbody">
+        <tr><td colspan="5" style="text-align: center; padding: 20px;">Loading history...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    async function loadHistory() {
+        try {
+            // Fetch all sessions from the disk
+            const res = await fetch('/api/sessions');
+            const allSessions = await res.json();
+
+            // Filter strictly for product modules
+            const sessions = allSessions.filter(s => s.moduleType === 'PRODUCT_THINKING');
+            const tbody = document.getElementById('history-tbody');
+
+            if (sessions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">No product sessions recorded. Complete a scenario to see analytics.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = ''; // Clear loading text
+
+            // Reverse for chronological chart rendering
+            const chronologicalSessions = [...sessions].reverse();
+            const labels = [];
+            const scores = [];
+
+            // 1. Populate the History Table (Descending Order)
+            sessions.forEach(session => {
+                const dateObj = new Date(parseInt(session.id));
+                const dateStr = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+
+                const tr = document.createElement('tr');
+                tr.className = 'clickable';
+                // Allows you to click the row to review the past session
+                tr.onclick = () => window.location.href = `product-thinking.html?session=${session.id}`;
+
+                tr.innerHTML = `
+                        <td>${dateStr}</td>
+                        <td>${session.title || 'Manager Scenario'}</td>
+                        <td>${session.competency || 'N/A'}</td>
+                        <td>
+                            <strong>${session.score || 0}/100</strong>
+                            ${session.hintsUsed !== undefined ? `<br><small style="color:#aaa;">Hints Used: ${session.hintsUsed}/3</small>` : ''}
+                        </td>
+                        <td>${session.hireSignal || 'Pending'}</td>
+                    `;
+                tbody.appendChild(tr);
+            });
+
+            // 2. Populate the Chart (Chronological Order)
+            chronologicalSessions.forEach(session => {
+                labels.push(new Date(parseInt(session.id)).toLocaleDateString());
+                scores.push(session.score || 0);
+            });
+
+            const ctx = document.getElementById('scoreChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Product Leadership Score',
+                        data: scores,
+                        borderColor: '#007acc',
+                        backgroundColor: '#007acc',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: { color: '#3c3c3c' },
+                            ticks: { color: '#d4d4d4' }
+                        },
+                        x: {
+                            grid: { color: '#3c3c3c' },
+                            ticks: { color: '#d4d4d4' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#d4d4d4', font: { size: 14 } }
+                        }
+                    }
+                }
+            });
+
+        } catch (err) {
+            console.error(err);
+            document.getElementById('history-tbody').innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--danger); padding: 20px;">Failed to load history. Ensure the backend is running.</td></tr>';
+        }
+    }
+
+    // Initialize
+    loadHistory();
+</script>
+</body>
+</html>
