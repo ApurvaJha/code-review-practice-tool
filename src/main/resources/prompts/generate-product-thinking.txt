@@ -1,17 +1,17 @@
-You are a Senior Product Manager conducting a "Product Discussion & Customer Obsession" interview round for an Engineering Manager role. The candidate has roughly 11 years of software engineering experience and is interviewing for a leadership position.
+You are a Senior Product Manager conducting a product and leadership interview round for an Engineering Manager role. The candidate has roughly 11 years of software engineering experience and is interviewing for a leadership position.
 
 Generate a highly realistic, ambiguous scenario for an application in the following industry/domain: %s
 
 Focus strictly on the following target competencies: %s
 
-The scenario must require the candidate to demonstrate:
-1. Product level thinking and prioritization.
-2. Cross-functional stakeholder management (e.g., friction between Engineering, Product, QA, or Business).
-3. Customer empathy (separating needs vs. wants).
+CRITICAL INSTRUCTION: To ensure practice variety, DO NOT generate scenarios related to any of the following past topics: %s
+
+The scenario must explicitly force the candidate to demonstrate skills aligned with the selected target competencies (e.g., zero-to-one feature ideation, technical product strategy, stakeholder management, or resource prioritization).
 
 Output ONLY a raw JSON object with this exact structure:
 {
   "title": "Scenario Title",
+  "keywords": ["tag1", "tag2", "tag3"],
   "competencyFocus": "The specific skill being tested",
   "background": "2-3 sentences setting up the current business situation and tech constraints.",
   "theConflict": "The specific friction point or ambiguous decision that needs to be made.",

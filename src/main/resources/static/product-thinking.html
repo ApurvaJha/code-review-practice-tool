@@ -9,6 +9,7 @@
             --bg-color: #1e1e1e; --text-color: #d4d4d4;
             --panel-bg: #252526; --border: #3c3c3c;
             --accent: #007acc; --success: #4CAF50; --danger: #f44336;
+            --obsidian: #7a52cc;
         }
         body {
             font-family: system-ui, -apple-system, sans-serif;
@@ -38,6 +39,9 @@
         button:disabled { background: #555; cursor: not-allowed; }
         button.secondary { background: #444; width: auto; margin-top: 0; }
         button.secondary:hover { background: #555; }
+        button.obsidian-btn { background: var(--obsidian); margin-top: 25px; }
+        button.obsidian-btn:hover { background: #623bb3; }
+
         #evaluation-results { display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
         .score-box { font-size: 1.5em; font-weight: bold; margin-bottom: 10px; }
         ul { padding-left: 20px; }
@@ -102,7 +106,6 @@
             margin-top: 10px; border-radius: 0 4px 4px 0; font-size: 0.9em;
         }
 
-        /* Alert Banner for errors */
         #error-banner {
             display: none; background: var(--danger); color: white; padding: 10px;
             border-radius: 4px; margin-top: 10px; text-align: center;
@@ -127,7 +130,8 @@
 
         <label style="display: block; margin-bottom: 5px; color: var(--accent); font-weight: bold;">Target Competencies:</label>
         <div class="checkbox-group" id="config-competencies">
-            <label class="checkbox-label"><input type="checkbox" value="Product Discussion & Customer Obsession" checked> Product Discussion & Customer Obsession</label>
+            <label class="checkbox-label"><input type="checkbox" value="Product Ideation & Feature Brainstorming" checked> Product Ideation & Feature Brainstorming</label>
+            <label class="checkbox-label"><input type="checkbox" value="Product Discussion & Customer Obsession"> Product Discussion & Customer Obsession</label>
             <label class="checkbox-label"><input type="checkbox" value="Stakeholder Management & Cross-Functional Alignment"> Stakeholder Management & Alignment</label>
             <label class="checkbox-label"><input type="checkbox" value="Business & Operations Prioritization"> Business & Operations Prioritization</label>
         </div>
@@ -181,6 +185,9 @@
             <input type="text" id="chat-input" placeholder="Defend your position..." onkeypress="handleChatEnter(event)">
             <button id="chat-btn" onclick="submitChat()">Reply</button>
         </div>
+
+        <!-- NEW: Obsidian Export Button -->
+        <button class="obsidian-btn" onclick="exportToMarkdown()">📥 Export Session to Obsidian Vault (.md)</button>
     </div>
 </div>
 
@@ -191,41 +198,38 @@
         <h2 style="margin-top: 0; border-bottom: 2px solid var(--accent); padding-bottom: 10px;">Actionable Answer Blueprints</h2>
 
         <div class="framework-section">
-            <h3>1. Product Discussion (The Problem-to-MVP Pipeline)</h3>
-            <p>Use this when asked to define a feature or resolve a vague customer request.</p>
+            <h3>1. Product Ideation (The Technical Leverage Brainstorm)</h3>
+            <div class="blueprint-box">
+                <div class="blueprint-step"><strong>Step 1: Identify Unfair Technical Advantage</strong> - What data or infrastructure does the backend already process that users don't see?</div>
+                <div class="blueprint-step"><strong>Step 2: Map to User Value</strong> - How does exposing this technical capability solve a pain point?</div>
+                <div class="blueprint-step"><strong>Step 3: Define the V1 Scope</strong> - Explain how to launch it quickly using existing APIs.</div>
+            </div>
+        </div>
+
+        <div class="framework-section">
+            <h3>2. Product Discussion (The Problem-to-MVP Pipeline)</h3>
             <div class="blueprint-box">
                 <div class="blueprint-step"><strong>Step 1: Uncover the "Why"</strong> - Don't accept the feature as requested. Define the actual user pain point.</div>
                 <div class="blueprint-step"><strong>Step 2: Propose the MVP</strong> - Define the cheapest, fastest way to test if the solution works.</div>
                 <div class="blueprint-step"><strong>Step 3: Define Success</strong> - State exactly what metric you will measure before building V2.</div>
-                <div class="template-quote">
-                    "The business is asking for [Feature X], but the core problem is actually [User Pain Point Y]. Instead of spending 2 months building a fully distributed system for this, I propose an MVP where we [Simple Solution Z] in 2 weeks. If we see a 10% lift in engagement, we will invest in the scalable V2 architecture."
-                </div>
             </div>
         </div>
 
         <div class="framework-section">
-            <h3>2. Stakeholder Management (The Trade-Off Triangle)</h3>
-            <p>Use this when PMs or Business Leaders demand unreasonable timelines or scope.</p>
+            <h3>3. Stakeholder Management (The Trade-Off Triangle)</h3>
             <div class="blueprint-box">
-                <div class="blueprint-step"><strong>Step 1: Validate & Align</strong> - Start by enthusiastically agreeing with the business goal (never start with "no").</div>
-                <div class="blueprint-step"><strong>Step 2: Expose the Hidden Risk</strong> - Translate technical debt into business impact (lost revenue, churn, downtime).</div>
-                <div class="blueprint-step"><strong>Step 3: Force a Choice</strong> - Present two clear options, giving the stakeholder the power to choose their preferred risk.</div>
-                <div class="template-quote">
-                    "I completely align with hitting the Q3 launch target. However, if we skip the database migration to save time, we risk severe latency during peak traffic, which directly threatens our checkout SLA. I can give you Option A: Launch in Q3 but only to 10% of users to limit risk. Or Option B: Delay to early Q4 and launch to 100% safely. Which risk profile does the business prefer?"
-                </div>
+                <div class="blueprint-step"><strong>Step 1: Validate & Align</strong> - Start by enthusiastically agreeing with the business goal.</div>
+                <div class="blueprint-step"><strong>Step 2: Expose the Hidden Risk</strong> - Translate technical debt into business impact.</div>
+                <div class="blueprint-step"><strong>Step 3: Force a Choice</strong> - Present two clear options, giving the stakeholder the power to choose.</div>
             </div>
         </div>
 
         <div class="framework-section">
-            <h3>3. Prioritization (The 70/20/10 Resource Rule)</h3>
-            <p>Use this when asked how you manage team capacity across multiple competing projects.</p>
+            <h3>4. Prioritization (The 70/20/10 Resource Rule)</h3>
             <div class="blueprint-box">
-                <div class="blueprint-step"><strong>Step 1: Establish the Baseline</strong> - State your strict resource buckets: 70% Product Features, 20% KTLO (Keep the Lights On/Tech Debt), 10% Innovation.</div>
+                <div class="blueprint-step"><strong>Step 1: Establish the Baseline</strong> - State your strict resource buckets: 70% Product, 20% KTLO, 10% Innovation.</div>
                 <div class="blueprint-step"><strong>Step 2: Evaluate the Ask</strong> - Where does the new request fit, and what gets bumped?</div>
                 <div class="blueprint-step"><strong>Step 3: Define Operational Cost</strong> - Always mention who supports the feature after it ships.</div>
-                <div class="template-quote">
-                    "Before committing the team, I protect 20% of our sprint capacity for paying down tech debt (like our ongoing Kafka upgrades). This new feature falls into our 70% product bucket. Because it has the highest ROI, it goes to the top of the backlog, but we must allocate 3 days post-launch for hypercare and setting up the Grafana alerts so my team doesn't burn out on-call."
-                </div>
             </div>
         </div>
     </div>
@@ -234,6 +238,10 @@
 <script>
     let conversationHistory = "";
     let openedHints = new Set();
+
+    // Global state objects for Markdown Export
+    let currentScenarioData = null;
+    let currentEvaluationData = null;
 
     function openFrameworks() { document.getElementById('framework-modal').style.display = 'flex'; }
     function closeFrameworks() { document.getElementById('framework-modal').style.display = 'none'; }
@@ -262,6 +270,10 @@
         try {
             const res = await fetch(`/api/sessions/${id}`);
             const data = await res.json();
+
+            // Set global state for export
+            currentScenarioData = data.scenario;
+            currentEvaluationData = data.evaluation;
 
             document.getElementById('config-panel').style.display = 'none';
             document.getElementById('scenario-content').style.display = 'block';
@@ -321,6 +333,7 @@
         document.getElementById('chat-history-container').innerHTML = '';
         conversationHistory = "";
         openedHints.clear();
+        currentScenarioData = null; currentEvaluationData = null;
         document.querySelectorAll('details.hint').forEach(detail => detail.removeAttribute('open'));
 
         try {
@@ -329,6 +342,7 @@
             if (!res.ok) throw new Error("API overloaded. Please wait a moment and try again.");
 
             const data = await res.json();
+            currentScenarioData = data; // Save to global state
 
             document.getElementById('loading-scenario').style.display = 'none';
             document.getElementById('scenario-content').style.display = 'block';
@@ -377,10 +391,10 @@
                 body: JSON.stringify(payload)
             });
 
-            // Do not clear or reset UI if the API fails, so the user can just click Submit again.
             if (!res.ok) throw new Error("API is currently overloaded (503). Your text is safe. Please click Submit again.");
 
             const data = await res.json();
+            currentEvaluationData = data; // Save to global state
 
             document.getElementById('evaluation-results').style.display = 'block';
             document.getElementById('eval-score').innerText = data.score;
@@ -419,19 +433,14 @@
                 body: JSON.stringify({ query: chatText, history: conversationHistory })
             });
 
-            // Halt execution and preserve the input box if the server rejects the request
             if (!res.ok) throw new Error("API is currently overloaded (503). Your reply is safe. Please click Reply again.");
 
             const chatData = await res.json();
             const chatContainer = document.getElementById('chat-history-container');
 
-            // 1. Render User Message explicitly on success
             chatContainer.innerHTML += `<div class="message"><div class="msg-you">You:</div><div class="msg-text">${chatText}</div></div>`;
-
-            // 2. Render PM Message
             chatContainer.innerHTML += `<div class="message"><div class="msg-pm">Senior PM:</div><div class="msg-text">${chatData.pmReply}</div></div>`;
 
-            // 3. Render Evaluation Box
             const missedHtml = chatData.missedOpportunities && chatData.missedOpportunities.length > 0
                 ? `<strong style="color: var(--danger);">Missed:</strong><ul style="margin-top: 5px; margin-bottom: 5px; padding-left: 20px;">${chatData.missedOpportunities.map(m => `<li>${m}</li>`).join('')}</ul>`
                 : '';
@@ -448,7 +457,6 @@
             chatContainer.scrollTop = chatContainer.scrollHeight;
             conversationHistory += `Candidate: ${chatText}\nPM: ${chatData.pmReply}\n`;
 
-            // Only clear the input field after successful completion
             inputField.value = '';
 
         } catch (err) {
@@ -457,6 +465,81 @@
             btn.disabled = false; btn.innerText = "Reply";
             inputField.disabled = false; inputField.focus();
         }
+    }
+
+    // NEW: Obsidian Markdown Export Logic
+    function exportToMarkdown() {
+        if (!currentScenarioData || !currentEvaluationData) {
+            return alert("No evaluation data available to export yet.");
+        }
+
+        const dateStr = new Date().toISOString().split('T')[0];
+        const tags = currentScenarioData.keywords ? currentScenarioData.keywords.map(k => `#${k.replace(/\s+/g, '-')}`).join(' ') : '';
+        const compTag = currentScenarioData.competencyFocus ? currentScenarioData.competencyFocus.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() : 'em-practice';
+
+        let md = `---
+date: ${dateStr}
+type: interview-prep
+competency: "${currentScenarioData.competencyFocus}"
+score: ${currentEvaluationData.score}
+signal: "${currentEvaluationData.hireSignal}"
+---
+
+# ${currentScenarioData.title}
+
+**Tags:** #engineering-manager #product-thinking ${tags} #${compTag}
+
+## Scenario Context
+> **Background:** ${currentScenarioData.background}
+>
+> **The Conflict:** ${currentScenarioData.theConflict}
+
+**Prompt:** ${currentScenarioData.question}
+
+---
+
+## My Strategy Response
+${document.getElementById('candidate-response').value}
+
+---
+
+## Evaluation (Score: ${currentEvaluationData.score}/100 - ${currentEvaluationData.hireSignal})
+
+### ✅ Strengths
+${currentEvaluationData.strengths.map(s => `- ${s}`).join('\n')}
+
+### ❌ Missed Opportunities
+${currentEvaluationData.missedOpportunities.map(m => `- ${m}`).join('\n')}
+
+### 💡 The Ideal Structure
+> ${currentEvaluationData.idealResponse}
+
+---
+
+## PM Follow-up Discussion
+`;
+
+        // Extract raw chat history string and format it for Obsidian
+        const lines = conversationHistory.split('\n');
+        lines.forEach(line => {
+            if (line.trim() === '') return;
+            if (line.startsWith('Candidate:')) {
+                md += `\n**Me:**\n${line.replace('Candidate:', '').trim()}\n`;
+            } else if (line.startsWith('PM:')) {
+                md += `\n**Senior PM:**\n> ${line.replace('PM:', '').trim()}\n`;
+            }
+        });
+
+        // Create and trigger Blob download
+        const blob = new Blob([md], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `EM_Prep_${dateStr}_${currentScenarioData.title.replace(/[^a-zA-Z0-9]/g, '_')}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     }
 </script>
 </body>
