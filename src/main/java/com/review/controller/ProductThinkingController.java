@@ -27,7 +27,9 @@ public class ProductThinkingController {
         this.activeCompetency = competency;
 
         String pastTopics = workspaceService.getRecentProductKeywords();
-        String scenario = productThinkingService.generateScenario(domain, competency, pastTopics);
+        String recentWeaknesses = workspaceService.getRecentMissedOpportunities();
+
+        String scenario = productThinkingService.generateScenario(domain, competency, pastTopics, recentWeaknesses);
 
         this.activeScenario = scenario;
         return scenario;
@@ -61,15 +63,22 @@ public class ProductThinkingController {
     }
 
     @PostMapping(value = "/chat", consumes = "application/json", produces = "application/json")
-    public String processChat(@RequestBody Map<String, String> payload) throws Exception {
-        String query = payload.getOrDefault("query", "");
-        String history = payload.getOrDefault("history", "");
+    public String processChat(@RequestBody Map<String, Object> payload) throws Exception {
+        String query = (String) payload.getOrDefault("query", "");
+        String history = (String) payload.getOrDefault("history", "");
+        boolean isHardcore = false;
+
+        if(payload.containsKey("isHardcore")) {
+            isHardcore = (Boolean) payload.get("isHardcore");
+        }
+
         return productThinkingService.chatAboutScenario(
                 this.activeScenario,
                 this.activeInitialResponse,
                 this.activeFollowUp,
                 history,
-                query
+                query,
+                isHardcore
         );
     }
 }

@@ -6,7 +6,11 @@ Focus strictly on the following target competencies: %s
 
 CRITICAL INSTRUCTION: To ensure practice variety, DO NOT generate scenarios related to any of the following past topics: %s
 
-The scenario must explicitly force the candidate to demonstrate skills aligned with the selected target competencies (e.g., zero-to-one feature ideation, technical product strategy, stakeholder management, or resource prioritization).
+CANDIDATE'S RECENT WEAKNESSES:
+%s
+If weaknesses are listed above, explicitly design this scenario's central conflict to test the candidate's ability to handle those exact issues.
+
+The scenario must explicitly force the candidate to demonstrate skills aligned with the selected target competencies.
 
 Output ONLY a raw JSON object with this exact structure:
 {

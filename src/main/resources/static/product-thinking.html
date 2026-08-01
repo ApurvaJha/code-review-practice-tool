@@ -42,7 +42,6 @@
         button.obsidian-btn { background: var(--obsidian); margin-top: 25px; }
         button.obsidian-btn:hover { background: #623bb3; }
 
-        /* Microphone Button Styles */
         button.mic-btn {
             background: #333; border: 1px solid #555; margin-top: 15px;
             transition: all 0.2s ease;
@@ -122,7 +121,6 @@
             margin-top: 10px; border-radius: 0 4px 4px 0; font-size: 0.9em;
         }
 
-        /* Alert Banner for errors */
         #error-banner {
             display: none; background: var(--danger); color: white; padding: 10px;
             border-radius: 4px; margin-top: 10px; text-align: center;
@@ -152,7 +150,16 @@
             <label class="checkbox-label"><input type="checkbox" value="Stakeholder Management & Cross-Functional Alignment"> Stakeholder Management & Alignment</label>
             <label class="checkbox-label"><input type="checkbox" value="Business & Operations Prioritization"> Business & Operations Prioritization</label>
         </div>
-        <button onclick="loadScenario()" id="generate-btn" style="margin-top: 0;">Generate New Scenario</button>
+
+        <!-- NEW: Hardcore Mode Toggle -->
+        <div style="margin-top: 15px; padding: 10px; background: rgba(244, 67, 54, 0.1); border: 1px solid var(--danger); border-radius: 4px;">
+            <label class="checkbox-label" style="margin-bottom: 0; color: #ff8a80;">
+                <input type="checkbox" id="config-hardcore" style="accent-color: var(--danger);">
+                🔥 Enable Hardcore Mode (Inject sudden technical crises during follow-ups)
+            </label>
+        </div>
+
+        <button onclick="loadScenario()" id="generate-btn" style="margin-top: 15px;">Generate New Scenario</button>
     </div>
 
     <div id="loading-scenario" style="display: none; text-align: center; color: var(--accent); margin-top: 20px;">Drafting scenario...</div>
@@ -186,7 +193,6 @@
     <div id="error-banner"></div>
     <textarea id="candidate-response" placeholder="Articulate your strategy here or click the microphone button to dictate..."></textarea>
 
-    <!-- Toggle Microphone Button -->
     <button id="speak-btn" class="mic-btn" onclick="toggleRecording()">
         🎤 Click to Speak
     </button>
@@ -263,7 +269,6 @@
     let currentScenarioData = null;
     let currentEvaluationData = null;
 
-    // --- Web Speech API Implementation ---
     let recognition = null;
     let isRecording = false;
     let baseText = "";
@@ -301,11 +306,10 @@
         };
 
         recognition.onend = function() {
-            if (isRecording) recognition.start(); // Keep alive if actively recording
+            if (isRecording) recognition.start();
         };
     }
 
-    // Toggle logic replacing the previous hold-to-speak logic
     function toggleRecording() {
         if (isRecording) {
             stopRecording();
@@ -337,7 +341,6 @@
         btn.classList.remove('recording');
         btn.innerText = "🎤 Click to Speak";
     }
-    // --- END Web Speech API ---
 
     function openFrameworks() { document.getElementById('framework-modal').style.display = 'flex'; }
     function closeFrameworks() { document.getElementById('framework-modal').style.display = 'none'; }
@@ -374,7 +377,7 @@
             document.getElementById('scenario-content').style.display = 'block';
             document.getElementById('evaluation-results').style.display = 'block';
             document.getElementById('submit-btn').style.display = 'none';
-            document.getElementById('speak-btn').style.display = 'none'; // Hide mic in history view
+            document.getElementById('speak-btn').style.display = 'none';
 
             document.getElementById('scenario-title').innerText = data.scenario.title;
             document.getElementById('scenario-competency').innerText = data.competency || data.scenario.competencyFocus;
@@ -473,7 +476,7 @@
     }
 
     async function submitResponse() {
-        if(isRecording) stopRecording(); // Ensure recording stops upon submission
+        if(isRecording) stopRecording();
         const responseText = document.getElementById('candidate-response').value;
         if (!responseText.trim()) return alert("Please enter a response.");
 
@@ -528,11 +531,14 @@
         const btn = document.getElementById('chat-btn');
         btn.disabled = true; inputField.disabled = true; btn.innerText = "Sending...";
 
+        // --- NEW: Grab the Hardcore toggle state ---
+        const isHardcore = document.getElementById('config-hardcore').checked;
+
         try {
             const res = await fetch('/api/product-thinking/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: chatText, history: conversationHistory })
+                body: JSON.stringify({ query: chatText, history: conversationHistory, isHardcore: isHardcore })
             });
 
             if (!res.ok) throw new Error("API is currently overloaded (503). Your reply is safe. Please click Reply again.");

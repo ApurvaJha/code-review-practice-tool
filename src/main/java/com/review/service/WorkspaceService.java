@@ -24,7 +24,6 @@ public class WorkspaceService {
         } catch (Exception e) { System.err.println("❌ Failed to create workspace directory: " + e.getMessage()); }
     }
 
-    // --- Legacy Code Review Save ---
     public void saveSession(String language, String level, String scenario, String comments, String evaluation) {
         try {
             String id = String.valueOf(System.currentTimeMillis());
@@ -45,7 +44,6 @@ public class WorkspaceService {
         } catch (Exception e) { System.err.println("❌ Critical error saving session to disk: " + e.getMessage()); }
     }
 
-    // --- New Product Thinking Save ---
     public void saveProductThinkingSession(String moduleType, String competency, String scenario, String candidateResponse, String evaluation, int hintsUsed) {
         try {
             String id = String.valueOf(System.currentTimeMillis());
@@ -69,7 +67,6 @@ public class WorkspaceService {
         }
     }
 
-    // --- Anti-Repetition Keyword Extraction ---
     public String getRecentProductKeywords() {
         File[] files = WORKSPACE_DIR.toFile().listFiles((d, name) -> name.endsWith(".json"));
         if (files == null || files.length == 0) return "None";
@@ -87,9 +84,34 @@ public class WorkspaceService {
                     }
                     if (tags.size() >= 15) break;
                 }
-            } catch (Exception e) { /* skip unparseable files */ }
+            } catch (Exception e) { }
         }
         return tags.isEmpty() ? "None" : String.join(", ", tags);
+    }
+
+    // --- NEW: Nemesis Extraction Logic ---
+    public String getRecentMissedOpportunities() {
+        File[] files = WORKSPACE_DIR.toFile().listFiles((d, name) -> name.endsWith(".json"));
+        if (files == null || files.length == 0) return "None";
+
+        List<String> missed = new ArrayList<>();
+        Arrays.sort(files, Comparator.comparingLong(File::lastModified).reversed());
+
+        int count = 0;
+        for (File f : files) {
+            try {
+                JsonNode root = mapper.readTree(f);
+                if ("PRODUCT_THINKING".equals(root.path("moduleType").asText())) {
+                    JsonNode missedNode = root.path("evaluation").path("missedOpportunities");
+                    if (missedNode.isArray()) {
+                        for (JsonNode m : missedNode) { missed.add(m.asText()); }
+                    }
+                    count++;
+                    if (count >= 5) break; // Look at last 5 sessions
+                }
+            } catch (Exception e) { }
+        }
+        return missed.isEmpty() ? "None" : String.join("; ", missed);
     }
 
     public List<Map<String, Object>> listSessions() {
